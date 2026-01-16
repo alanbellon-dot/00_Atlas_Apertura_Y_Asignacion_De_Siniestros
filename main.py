@@ -43,7 +43,8 @@ INPUT_CONFIRM_TEL = (By.XPATH, "(//input[@formcontrolname='telefono'])[2]")
 BTN_CAUSA = (By.XPATH, "//span[contains(text(), 'Causa')]")
 OPCION_COLISION = (By.XPATH, "//span[contains(text(), 'COLISION')]")
 
-
+# --- SELECTORES: DATOS DEL CONDUCTOR ---
+CHECKBOX_CONDUCTOR = (By.ID, "mat-mdc-checkbox-2-input")
 
 
 # ==========================================
@@ -104,6 +105,10 @@ class Atlas:
         except Exception as e:
             print(f"Error al intentar click en {locator}: {e}")
             raise
+    def _click_js(self, locator):
+        """Fuerza un click usando JavaScript (útil para checkboxes rebeldes)."""
+        element = self.wait.until(EC.presence_of_element_located(locator))
+        self.driver.execute_script("arguments[0].click();", element)
 
     def _escribir(self, locator, texto):
         """Espera a que sea visible, limpia el campo y escribe."""
@@ -158,6 +163,10 @@ class Atlas:
         self._click(BTN_CAUSA)
         self._click(OPCION_COLISION)
 
+    def datos_del_conductor(self):
+        print("Llenando datos del conductor...")
+        self._click_js(CHECKBOX_CONDUCTOR) 
+
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -177,6 +186,7 @@ if __name__ == "__main__":
     try:
         bot.iniciar_sesion()
         bot.datos_del_reportante()
+        bot.datos_del_conductor()
         
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
