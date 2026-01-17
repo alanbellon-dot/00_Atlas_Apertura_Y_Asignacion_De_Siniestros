@@ -53,7 +53,11 @@ INPUT_MAPA = (By.CSS_SELECTOR, "input.pac-target-input")
 BTN_CREAR_FOLIO = (By.XPATH, "//button[contains(text(), 'Crear folio')]")
 
 
-
+# --- SELECTORES: DATOS DEL SINIESTRO ---
+BTN_CALENDARIO = (By.CSS_SELECTOR, "mat-datepicker-toggle button")
+BTN_DIA_HOY = (By.CSS_SELECTOR, "button[aria-current='date']")
+BTN_RELOJ = (By.XPATH, "//mat-icon[contains(text(), 'schedule')]/ancestor::button")
+TEXTAREA_HECHOS = (By.CSS_SELECTOR, "textarea[formcontrolname='que_ocurrio']")
 
 # ==========================================
 # 2. CLASE PRINCIPAL DEL BOT
@@ -199,6 +203,7 @@ class Atlas:
             self._esperar_elemento(INPUT_MAPA).send_keys(Keys.ENTER)
             
             print(f">> Dirección '{direccion}' ingresada con éxito.")
+            time.sleep(2)
 
         except Exception as e:
             print(f"Error en ubicacion_del_siniestro: {e}")
@@ -223,6 +228,26 @@ class Atlas:
             print(f"Error: {e}")
             raise
 
+    
+    def datos_del_siniestro(self):
+        print("Llenando datos del siniestro...")
+        print("Dando clic en el calendario...")
+        self._click_js(BTN_CALENDARIO)
+        time.sleep(1)
+        self._click_js(BTN_DIA_HOY)
+        self._click_js(BTN_RELOJ)
+        print("Escribiendo hechos...")
+        campo = self._esperar_elemento(TEXTAREA_HECHOS)
+        
+        # Scroll y Click forzado en una sola línea de JS
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", campo)
+        time.sleep(0.5) # Pausa breve para estabilidad
+        
+        campo.send_keys("El conductor perdió el control del vehículo y chocó contra un poste.")
+        print(">> Hechos listos.")
+
+
+
     def cerrar(self):
         print("Cerrando navegador...")
         try:
@@ -244,6 +269,7 @@ if __name__ == "__main__":
         bot.datos_del_conductor()
         bot.ubicacion_del_siniestro()
         bot.finalizar_registro()
+        bot.datos_del_siniestro()
         
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
