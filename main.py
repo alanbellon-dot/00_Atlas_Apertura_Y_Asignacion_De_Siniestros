@@ -5,8 +5,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-# from selenium.webdriver.common.keys import Keys # No se usa en este ejemplo, pero útil tenerlo
-# from selenium.webdriver.common.action_chains import ActionChains # Igual que arriba
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.action_chains import ActionChains # Igual que arriba
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONSTANTES
@@ -45,6 +45,14 @@ OPCION_COLISION = (By.XPATH, "//span[contains(text(), 'COLISION')]")
 
 # --- SELECTORES: DATOS DEL CONDUCTOR ---
 CHECKBOX_CONDUCTOR = (By.ID, "mat-mdc-checkbox-2-input")
+CHECKBOX_1 = (By.ID, "mat-mdc-checkbox-1-input")
+
+# -- SELECTORES: UBICACIÓN DEL SINIESTRO ---
+BTN_LUPA = (By.CSS_SELECTOR, "button[aria-label='Btn búsqueda']")
+INPUT_MAPA = (By.CSS_SELECTOR, "input.pac-target-input")
+BTN_CREAR_FOLIO = (By.XPATH, "//button[contains(text(), 'Crear folio')]")
+
+
 
 
 # ==========================================
@@ -166,7 +174,54 @@ class Atlas:
     def datos_del_conductor(self):
         print("Llenando datos del conductor...")
         self._click_js(CHECKBOX_CONDUCTOR) 
+        self._click_js(CHECKBOX_1)
 
+
+    # ==========================================
+    # 4. LÓGICA DE NEGOCIO
+    # ==========================================
+
+    def ubicacion_del_siniestro(self):
+        """
+        Despliega el buscador del mapa y escribe la dirección.
+        """
+        print("Iniciando ubicación del siniestro...")
+        try:
+            print("Desplegando buscador de mapa...")
+            self._click_js(BTN_LUPA)
+            
+            time.sleep(1) 
+            
+            direccion = "Metrobús Nápoles, Avenida Insurgentes Sur, Colonia Nápoles, Mexico City, CDMX, Mexico"
+            self._escribir(INPUT_MAPA, direccion)
+            
+            # 4. Opcional: Presionar ENTER para que el mapa busque
+            self._esperar_elemento(INPUT_MAPA).send_keys(Keys.ENTER)
+            
+            print(f">> Dirección '{direccion}' ingresada con éxito.")
+
+        except Exception as e:
+            print(f"Error en ubicacion_del_siniestro: {e}")
+            raise
+
+    def finalizar_registro(self):
+        print("Finalizando registro...")
+        try:
+            # 1. Localizar elemento
+            elemento = self._esperar_elemento(BTN_CREAR_FOLIO)
+            
+            # 2. Scroll hacia el elemento para que esté visible
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elemento)
+            time.sleep(1)
+            
+            # 3. Clic vía JavaScript
+            self.driver.execute_script("arguments[0].click();", elemento)
+            
+            print(">> Clic exitoso en Crear Folio.")
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            raise
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -187,6 +242,8 @@ if __name__ == "__main__":
         bot.iniciar_sesion()
         bot.datos_del_reportante()
         bot.datos_del_conductor()
+        bot.ubicacion_del_siniestro()
+        bot.finalizar_registro()
         
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
