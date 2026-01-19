@@ -74,6 +74,16 @@ SELECTOR_RADIO_GROUP_5_NO = (By.XPATH, "//input[@name='mat-radio-group-5' and @v
 SELECTOR_RADIO_GROUP_6_NO = (By.XPATH, "//input[@name='mat-radio-group-6' and @value='false']")
 SELECTOR_RADIO_GROUP_7_NO = (By.XPATH, "//input[@name='mat-radio-group-7' and @value='false']")
 
+
+# --- SELECTORES: PÓLIZA ---
+SELECTOR_INPUT_SUCURSAL = (By.CSS_SELECTOR, "input[formcontrolname='p_sucursal']")
+SELECTOR_INPUT_POLIZA = (By.CSS_SELECTOR, "input[formcontrolname='p_poliza_central']")
+SELECTOR_INPUT_INCISO = (By.CSS_SELECTOR, "input[formcontrolname='p_inciso']")
+
+
+
+
+
 # ==========================================
 # 2. CLASE PRINCIPAL DEL BOT
 # ==========================================
@@ -147,6 +157,11 @@ class Atlas:
         except Exception as e:
             print(f"Error al escribir en {locator}: {e}")
             raise
+    def _escribir_js(self, locator, texto):
+        """Scroll, click forzado y escritura."""
+        element = self._esperar_elemento(locator)
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", element)
+        element.send_keys(texto)
 
     def _esperar_elemento(self, locator):
         return self.wait.until(EC.presence_of_element_located(locator))
@@ -296,9 +311,14 @@ class Atlas:
         self._click_js(SELECTOR_RADIO_GROUP_6_NO)
         self._click_js(SELECTOR_RADIO_GROUP_7_NO)
 
-    def piliza(self):
-        print("Función piliza ejecutada.")
-        
+    def poliza(self):
+        print("Función poliza ejecutada.")
+        print("Escribiendo sucursal...")
+        self._escribir_js(SELECTOR_INPUT_SUCURSAL, "MS1")
+        self._escribir_js(SELECTOR_INPUT_POLIZA, "57089")
+        self._escribir_js(SELECTOR_INPUT_INCISO, "1")
+
+
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -323,6 +343,7 @@ if __name__ == "__main__":
         bot.finalizar_registro()
         bot.datos_del_siniestro()
         bot.ajuste_remoto()
+        bot.poliza()
         
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
