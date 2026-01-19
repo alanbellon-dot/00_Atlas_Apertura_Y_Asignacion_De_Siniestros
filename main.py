@@ -14,8 +14,8 @@ from selenium.webdriver.common.action_chains import ActionChains # Igual que arr
 
 # --- Datos de acceso ---
 BASE_URL = "https://prometeo-qa-demo.web.app/login"
-USERNAME = "anaPrueba"
-PASSWORD = "Anaprueba26"
+USERNAME = "Testing"
+PASSWORD = "123456*"
 
 # --- SELECTORES ---
 # HE AQUÍ EL CAMBIO PRINCIPAL:
@@ -135,6 +135,13 @@ class Atlas:
 
     def _esperar_elemento(self, locator):
         return self.wait.until(EC.presence_of_element_located(locator))
+    
+    def _esperar_desaparicion(self, locator):
+        """Espera a que un elemento (como un loader) desaparezca."""
+        try:
+            self.wait.until(EC.invisibility_of_element_located(locator))
+        except Exception as e:
+            print(f"Advertencia: El elemento {locator} no desapareció o no existía: {e}")
 
     # ==========================================
     # 4. LÓGICA DE NEGOCIO
@@ -153,6 +160,8 @@ class Atlas:
         print("Credenciales enviadas.")
 
     def datos_del_reportante(self):
+        print("Esperando que desaparezca la pantalla de carga (contenedorBlock)...")
+        self._esperar_desaparicion((By.CSS_SELECTOR, ".contenedorBlock"))
         print("Intentando de encontrar los campos de datos del reportante...")
         self._escribir(INPUT_NOMBRE, "AN")
         self._escribir(INPUT_PATERNO, "Apellido Paterno")
