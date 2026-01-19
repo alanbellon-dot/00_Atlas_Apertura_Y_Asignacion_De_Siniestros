@@ -58,6 +58,21 @@ BTN_CALENDARIO = (By.CSS_SELECTOR, "mat-datepicker-toggle button")
 BTN_DIA_HOY = (By.CSS_SELECTOR, "button[aria-current='date']")
 BTN_RELOJ = (By.XPATH, "//mat-icon[contains(text(), 'schedule')]/ancestor::button")
 TEXTAREA_HECHOS = (By.CSS_SELECTOR, "textarea[formcontrolname='que_ocurrio']")
+INPUT_PLACAS = (By.CSS_SELECTOR, 'input[formcontrolname="placas_cabina"]')
+BTN_COLOR = (By.XPATH, "//span[contains(text(), 'Color')]")
+OPCION_COLOR_AMARILLO = (By.XPATH, "//span[contains(text(), 'AMARILLO')]")
+BTN_DESPLEGABLE_NO = (By.XPATH, "//div[contains(@class, 'mat-mdc-select-value')]//span[contains(text(), 'No')]")
+OPCION_SI = (By.XPATH, "//mat-option//span[contains(text(), 'Si')]")
+BTN_CALENDARIO_2 = (By.XPATH, "(//mat-datepicker-toggle//button)[2]")
+BTN_DIA_HOY_2 = (By.CSS_SELECTOR, "button[aria-current='date']")
+# Selectores para la HORA DE CITA (El [2] indica que es el segundo par de inputs en la pagina)
+SELECTOR_HORA_CITA = (By.XPATH, "//mat-form-field[contains(., 'Hora de cita')]//input[@formcontrolname='horas']")
+
+# ---SELECTORES: AJUSTE REMOTO ---
+SELECTOR_RADIO_NO = (By.XPATH, "//input[@name='mat-radio-group-4' and @value='false']")
+SELECTOR_RADIO_GROUP_5_NO = (By.XPATH, "//input[@name='mat-radio-group-5' and @value='false']")
+SELECTOR_RADIO_GROUP_6_NO = (By.XPATH, "//input[@name='mat-radio-group-6' and @value='false']")
+SELECTOR_RADIO_GROUP_7_NO = (By.XPATH, "//input[@name='mat-radio-group-7' and @value='false']")
 
 # ==========================================
 # 2. CLASE PRINCIPAL DEL BOT
@@ -255,7 +270,35 @@ class Atlas:
         campo.send_keys("El conductor perdió el control del vehículo y chocó contra un poste.")
         print(">> Hechos listos.")
 
+        self._escribir(INPUT_PLACAS, "TX11111")
+        print("Seleccionando color del vehículo...")
+        self._click_js(BTN_COLOR)                    
+        self._click(OPCION_COLOR_AMARILLO)
+        print("Abriendo desplegable con valor 'No'...")
+        self._click(BTN_DESPLEGABLE_NO)
+        print("Cambiando opción a 'Si'...")
+        self._click(OPCION_SI)
+        print("Seleccionando segunda fecha en calendario...")
+        self._click_js(BTN_CALENDARIO_2)
+        print("Seleccionando día de hoy...")
+        self._click_js(BTN_DIA_HOY_2)
+        time.sleep(0.5)
+        print("Cerrando calendario forzosamente...")
+        webdriver.ActionChains(self.driver).send_keys(Keys.ESCAPE).perform()
+        print("Escribiendo hora de la cita (13:00) en el campo correcto...")
+        self._escribir(SELECTOR_HORA_CITA, "1300")
 
+
+    def ajuste_remoto(self):
+        print("Seleccionando opción 'No' para ajuste remoto...")
+        self._click_js(SELECTOR_RADIO_NO)
+        self._click_js(SELECTOR_RADIO_GROUP_5_NO)
+        self._click_js(SELECTOR_RADIO_GROUP_6_NO)
+        self._click_js(SELECTOR_RADIO_GROUP_7_NO)
+
+    def piliza(self):
+        print("Función piliza ejecutada.")
+        
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -279,6 +322,7 @@ if __name__ == "__main__":
         bot.ubicacion_del_siniestro()
         bot.finalizar_registro()
         bot.datos_del_siniestro()
+        bot.ajuste_remoto()
         
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
