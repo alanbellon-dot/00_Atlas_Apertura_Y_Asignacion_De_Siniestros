@@ -79,8 +79,23 @@ SELECTOR_RADIO_GROUP_7_NO = (By.XPATH, "//input[@name='mat-radio-group-7' and @v
 SELECTOR_INPUT_SUCURSAL = (By.CSS_SELECTOR, "input[formcontrolname='p_sucursal']")
 SELECTOR_INPUT_POLIZA = (By.CSS_SELECTOR, "input[formcontrolname='p_poliza_central']")
 SELECTOR_INPUT_INCISO = (By.CSS_SELECTOR, "input[formcontrolname='p_inciso']")
+SELECTOR_BTN_BUSCAR = (By.XPATH, "//button[contains(., 'Buscar')]")
+SELECTOR_CHECKBOX_LABEL = (By.XPATH, "(//td[contains(@class, 'mat-column-checkbox')]//label)[1]")
+SELECTOR_BTN_SELECCIONAR = (By.XPATH, "//button[contains(., 'Seleccionar')]")
+SELECTOR_BTN_ACEPTAR = (By.XPATH, "//button[contains(., 'Aceptar')]")
+SELECTOR_BTN_SWAL_ACEPTAR = (By.XPATH, "//button[contains(@class, 'swal2') and contains(., 'Aceptar')]")
 
 
+# --- SELECTORES: MENÚ SEGUIMIENTO AJUSTADORES ---
+SELECTOR_MENU_SEGUIMIENTO = (By.XPATH, "//a[@title='Seguimiento ajustadores']")
+SELECTOR_TAB_POR_ASIGNAR = (By.XPATH, "//span[contains(., 'Por Asignar')]")
+SELECTOR_BTN_ASIGNAR_PRIMERA_FILA = (By.XPATH, "(//tbody//tr)[1]//button[contains(., 'Asignar')]")
+
+# --- SELECTORES: SELECCIÓN DE AJUSTADOR ---
+SELECTOR_BTN_ASIGNACION_MANUAL = (By.XPATH, "//button[contains(., 'Asignación manual')]")
+# Alternativa: Busca SOLO dentro de la ventana modal/dialogo
+SELECTOR_TXT_ASIGNAR = (By.XPATH, "//span[normalize-space()='Asignar']")
+SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains(., 'Asignar')]")
 
 
 
@@ -142,6 +157,16 @@ class Atlas:
         except Exception as e:
             print(f"Error al intentar click en {locator}: {e}")
             raise
+
+    def _click_scroll_js(self, locator):
+        """Localiza, hace scroll hasta el elemento, espera un momento y da clic."""
+        element = self._esperar_elemento(locator)
+        # Scroll suave para poner el elemento en el centro
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        time.sleep(1) # Pausa importante para que la animación del scroll termine
+        self.driver.execute_script("arguments[0].click();", element)
+
+
     def _click_js(self, locator):
         """Fuerza un click usando JavaScript (útil para checkboxes rebeldes)."""
         element = self.wait.until(EC.presence_of_element_located(locator))
@@ -317,8 +342,35 @@ class Atlas:
         self._escribir_js(SELECTOR_INPUT_SUCURSAL, "MS1")
         self._escribir_js(SELECTOR_INPUT_POLIZA, "57089")
         self._escribir_js(SELECTOR_INPUT_INCISO, "1")
+        print("Clic en botón Buscar...")
+        self._click_js(SELECTOR_BTN_BUSCAR)
+        print("Seleccionando póliza en la tabla...")
+        self._click_js(SELECTOR_CHECKBOX_LABEL)
+        time.sleep(1)
+        print("Clic en botón Seleccionar...")
+        self._click_js(SELECTOR_BTN_SELECCIONAR)
+        time.sleep(4)
+        self._click_js(SELECTOR_BTN_SELECCIONAR)
+        time.sleep(2)
+        self._click_js(SELECTOR_BTN_ACEPTAR)
+        time.sleep(10)
+        self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
 
+    def seguimiento_ajustadores(self):
+        print("Navegando al menú de Seguimiento de Ajustadores...")
+        self._click_js(SELECTOR_MENU_SEGUIMIENTO)
+        time.sleep(5)
+        print("Seleccionando la pestaña 'Por Asignar'...")
+        self._click_js(SELECTOR_TAB_POR_ASIGNAR)
+        time.sleep(1)
+        self._click_js(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA)
 
+    def seleccionar_ajustador(self):
+        print("Seleccionando ajustador manualmente...")
+        self._click_js(SELECTOR_BTN_ASIGNACION_MANUAL)
+        self._click_js(SELECTOR_TXT_ASIGNAR)
+        self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
+        self._click_scroll_js(SELECTOR_BTN_ASIGNAR_FINAL)
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -344,7 +396,13 @@ if __name__ == "__main__":
         bot.datos_del_siniestro()
         bot.ajuste_remoto()
         bot.poliza()
-        
+        bot.seguimiento_ajustadores()
+        bot.seleccionar_ajustador()        
+
+
+
+
+
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
         
