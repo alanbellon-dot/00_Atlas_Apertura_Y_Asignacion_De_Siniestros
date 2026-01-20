@@ -355,11 +355,20 @@ class Atlas:
         print("Asignando ajustador...")
         self._click_js(SELECTOR_TXT_ASIGNAR)
         time.sleep(2)
-        print("Clic en botón Asignar final...")
-        self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
-        time.sleep(2)
-        print("Confirmando asignación...")
-        self._click_scroll_js(SELECTOR_BTN_ASIGNAR_FINAL)
+        try:
+            # 1. Intenta hacer clic en el primer botón
+            self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
+            
+            # 2. Si la línea de arriba NO falló, ejecuta lo siguiente:
+            print("Botón encontrado. Procediendo...")
+            time.sleep(2)
+            print("Confirmando asignación...")
+            self._click_scroll_js(SELECTOR_BTN_ASIGNAR_FINAL)
+
+        except Exception:
+            # 3. Si no encuentra el botón, entra aquí y no hace nada (o imprime un log)
+            print("El botón de asignar no apareció, el flujo ha terminado.")
+            pass
 
     def cerrar(self):
         print("Cerrando navegador...")
