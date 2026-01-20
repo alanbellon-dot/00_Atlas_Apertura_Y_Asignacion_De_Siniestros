@@ -90,6 +90,7 @@ SELECTOR_BTN_ASIGNAR_PRIMERA_FILA = (By.XPATH, "(//tbody//tr)[1]//button[contain
 SELECTOR_BTN_ASIGNACION_MANUAL = (By.XPATH, "//button[contains(., 'Asignación manual')]")
 # Alternativa: Busca SOLO dentro de la ventana modal/dialogo
 SELECTOR_TXT_ASIGNAR = (By.XPATH, "//span[normalize-space()='Asignar']")
+SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains(., 'Asignar')]")
 
 
 
@@ -354,7 +355,11 @@ class Atlas:
         print("Asignando ajustador...")
         self._click_js(SELECTOR_TXT_ASIGNAR)
         time.sleep(2)
-        
+        print("Clic en botón Asignar final...")
+        self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
+        time.sleep(2)
+        print("Confirmando asignación...")
+        self._click_scroll_js(SELECTOR_BTN_ASIGNAR_FINAL)
 
     def cerrar(self):
         print("Cerrando navegador...")
