@@ -1,3 +1,8 @@
+from busquedas.busqueda_poliza import BusquedaPoliza
+from busquedas.busqueda_serie import BusquedaSerie
+from busquedas.busqueda_placas import BusquedaPlacas
+from busquedas.busqueda_santader import BusquedaSantander
+from busquedas.busqueda_inciso import BusquedaInciso
 import time
 import os
 from selenium import webdriver
@@ -6,8 +11,8 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains # Igual que arriba
-from datetime import datetime, timedelta
+
+
 
 # ==========================================
 # 1. CONFIGURACIÓN Y CONSTANTES
@@ -70,15 +75,16 @@ SELECTOR_RADIO_GROUP_6_NO = (By.XPATH, "//input[@name='mat-radio-group-6' and @v
 SELECTOR_RADIO_GROUP_7_NO = (By.XPATH, "//input[@name='mat-radio-group-7' and @value='false']")
 
 
-# --- SELECTORES: PÓLIZA ---
-SELECTOR_INPUT_SUCURSAL = (By.CSS_SELECTOR, "input[formcontrolname='p_sucursal']")
-SELECTOR_INPUT_POLIZA = (By.CSS_SELECTOR, "input[formcontrolname='p_poliza_central']")
-SELECTOR_INPUT_INCISO = (By.CSS_SELECTOR, "input[formcontrolname='p_inciso']")
-SELECTOR_BTN_BUSCAR = (By.XPATH, "//button[contains(., 'Buscar')]")
-SELECTOR_CHECKBOX_LABEL = (By.XPATH, "(//td[contains(@class, 'mat-column-checkbox')]//label)[1]")
-SELECTOR_BTN_SELECCIONAR = (By.XPATH, "//button[contains(., 'Seleccionar')]")
-SELECTOR_BTN_ACEPTAR = (By.XPATH, "//button[contains(., 'Aceptar')]")
-SELECTOR_BTN_SWAL_ACEPTAR = (By.XPATH, "//button[contains(@class, 'swal2') and contains(., 'Aceptar')]")
+# --- SELECTORES: BÚSQUEDA GENÉRICA ---
+# Selector para abrir el dropdown que dice "Buscar por"
+SELECTOR_DROPDOWN_CRITERIO = (By.XPATH, "//mat-label[contains(text(), 'Buscar por')]/ancestor::mat-form-field//mat-select")
+
+# Opciones dentro del dropdown (Angular las renderiza fuera del DOM normal, en un cdk-overlay)
+OPCION_DROPDOWN_POLIZA = (By.XPATH, "//mat-option//span[contains(text(), 'Póliza')]")
+OPCION_DROPDOWN_SERIE = (By.XPATH, "//mat-option//span[contains(text(), 'Serie')]")
+OPCION_DROPDOWN_PLACAS = (By.XPATH, "//mat-option//span[contains(text(), 'Placas')]")
+OPCION_DROPDOWN_SANTANDER = (By.XPATH, "//mat-option//span[contains(text(), 'Santander')]")
+OPCION_DROPDOWN_INCISO = (By.XPATH, "//mat-option//span[contains(text(), 'Inciso')]")
 
 
 # --- SELECTORES: MENÚ SEGUIMIENTO AJUSTADORES ---
@@ -319,30 +325,70 @@ class Atlas:
         self._click_js(SELECTOR_RADIO_GROUP_6_NO)
         self._click_js(SELECTOR_RADIO_GROUP_7_NO)
 
-    def poliza(self):
-        print("Función poliza ejecutada.")
-        print("Escribiendo sucursal...")
-        self._escribir_js(SELECTOR_INPUT_SUCURSAL, "MS1")
-        self._escribir_js(SELECTOR_INPUT_POLIZA, "57089")
-        self._escribir_js(SELECTOR_INPUT_INCISO, "1")
-        print("Clic en botón Buscar...")
-        self._click_js(SELECTOR_BTN_BUSCAR)
-        print("Seleccionando póliza en la tabla...")
-        self._click_js(SELECTOR_CHECKBOX_LABEL)
-        time.sleep(1)
-        print("Clic en botón Seleccionar...")
-        self._click_js(SELECTOR_BTN_SELECCIONAR)
-        time.sleep(4)
-        self._click_js(SELECTOR_BTN_SELECCIONAR)
-        time.sleep(2)
-        self._click_js(SELECTOR_BTN_ACEPTAR)
-        time.sleep(10)
-        self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
+    def buscar_poliza_dinamica(self, criterio="INCISO"):
+        """
+        Función orquestadora que decide qué estrategia usar.
+        :param criterio: String ('POLIZA', 'SERIE', 'PLACAS')
+        """
+        print(f"--- Iniciando módulo de búsqueda por: {criterio} ---")
+
+        # 1. SELECCIONAR EL CRITERIO EN EL DROPDOWN
+        # Primero verificamos si necesitamos cambiar el dropdown
+        try:
+            print(f"Abriendo menú 'Buscar por'...")
+            self._click_js(SELECTOR_DROPDOWN_CRITERIO)
+            time.sleep(1) # Esperar animación del menú
+
+            if criterio == "POLIZA":
+                print("Eligiendo opción 'Póliza'...")
+                self._click_js(OPCION_DROPDOWN_POLIZA)
+            elif criterio == "SERIE":
+                print("Eligiendo opción 'Serie'...")
+                self._click_js(OPCION_DROPDOWN_SERIE)
+            elif criterio == "PLACAS":
+                self._click_js(OPCION_DROPDOWN_PLACAS)
+            elif criterio == "SANTANDER":
+                self._click_js(OPCION_DROPDOWN_SANTANDER)
+            elif criterio == "INCISO":
+                self._click_js(OPCION_DROPDOWN_INCISO)
+            else:
+                return
+            
+            # Pequeña pausa para que Angular renderice los inputs correspondientes
+            time.sleep(1)
+            
+        except Exception as e:
+            print(f"Error seleccionando el criterio en el dropdown: {e}")
+            # Si falla, quizás ya estaba seleccionado por defecto, intentamos continuar...
+
+        # 2. EJECUTAR LA ESTRATEGIA CORRESPONDIENTE
+        if criterio == "POLIZA":
+            # Instanciamos la clase y le pasamos 'self' (este bot Atlas)
+            estrategia = BusquedaPoliza(self)
+            estrategia.ejecutar()
+            
+        elif criterio == "SERIE":
+            print("Buscando por SERIE...")
+            estrategia = BusquedaSerie(self)
+            estrategia.ejecutar()
+        
+        elif criterio == "PLACAS":
+            estrategia = BusquedaPlacas(self)
+            estrategia.ejecutar()
+
+        elif criterio == "SANTANDER":
+            estrategia = BusquedaSantander(self)
+            estrategia.ejecutar()   
+        elif criterio == "INCISO":
+            estrategia = BusquedaInciso(self)
+            estrategia.ejecutar()
+        else:
+            return   
 
     def seguimiento_ajustadores(self):
         print("Navegando al menú de Seguimiento de Ajustadores...")
         self._click_js(SELECTOR_MENU_SEGUIMIENTO)
-        time.sleep(5)
+        time.sleep(7)
         print("Seleccionando la pestaña 'Por Asignar'...")
         self._click_js(SELECTOR_TAB_POR_ASIGNAR)
         time.sleep(1)
@@ -393,7 +439,7 @@ if __name__ == "__main__":
         bot.finalizar_registro()
         bot.datos_del_siniestro()
         bot.ajuste_remoto()
-        bot.poliza()
+        bot.buscar_poliza_dinamica()
         bot.seguimiento_ajustadores()
         bot.seleccionar_ajustador()        
 
