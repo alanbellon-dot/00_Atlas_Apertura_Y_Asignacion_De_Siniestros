@@ -389,11 +389,32 @@ class Atlas:
     def seguimiento_ajustadores(self):
         print("Navegando al menú de Seguimiento de Ajustadores...")
         self._click_js(SELECTOR_MENU_SEGUIMIENTO)
-        time.sleep(7)
+        
+        # Damos tiempo a que cargue la nueva página completamente
+        time.sleep(5)
+        
         print("Seleccionando la pestaña 'Por Asignar'...")
         self._click_js(SELECTOR_TAB_POR_ASIGNAR)
-        time.sleep(1)
-        self._click_js(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA)
+        
+        print("Esperando a que cargue la tabla de registros...")
+        # Aumentamos el tiempo de espera para asegurar que la tabla aparezca
+        time.sleep(5) 
+        
+        print("Intentando asignar la primera fila...")
+        try:
+            # Usamos el wait explícito para asegurar que el botón es clickeable
+            # Esto evita el error fatal si el botón no está listo
+            btn_asignar = self.wait.until(EC.element_to_be_clickable(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA))
+            
+            # Scroll y Click seguro
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar)
+            time.sleep(1) # Pequeña pausa tras el scroll
+            self.driver.execute_script("arguments[0].click();", btn_asignar)
+            print(">> Botón 'Asignar' clickeado correctamente.")
+            
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo clickear el botón 'Asignar'. "
+                  f"Puede que la tabla esté vacía o tardó demasiado. Detalles: {e}")
 
     def seleccionar_ajustador(self):
         print("Seleccionando ajustador manualmente...")
