@@ -296,6 +296,7 @@ class Atlas:
     
     def datos_del_siniestro(self):
         print("Llenando datos del siniestro...")
+        time.sleep(2)  # Esperar a que la sección esté lista
         print("Dando clic en el calendario...")
         self._click_js(BTN_CALENDARIO)
         time.sleep(1)
@@ -325,7 +326,7 @@ class Atlas:
         self._click_js(SELECTOR_RADIO_GROUP_6_NO)
         self._click_js(SELECTOR_RADIO_GROUP_7_NO)
 
-    def buscar_poliza_dinamica(self, criterio="SANTANDER"):
+    def buscar_poliza_dinamica(self, criterio="SERIE"):
         """
         Función orquestadora que decide qué estrategia usar.
         :param criterio: String ('POLIZA', 'SERIE', 'PLACAS')
@@ -378,7 +379,7 @@ class Atlas:
 
         elif criterio == "SANTANDER":
             estrategia = BusquedaSantander(self)
-            estrategia.ejecutar()   
+            estrategia.ejecutar()
         elif criterio == "INCISO":
             estrategia = BusquedaInciso(self)
             estrategia.ejecutar()

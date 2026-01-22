@@ -27,7 +27,7 @@ class BusquedaSantander:
 
         # 1. Llenar campos específicos
         print("Escribiendo canal")
-        self.bot._escribir_js(SELECTOR_INPUT_CANAL, "06")
+        self.bot._escribir_js(SELECTOR_INPUT_CANAL, "6")
         print("Escribiendo ramo")
         self.bot._escribir_js(SELECTOR_INPUT_RAMO, "91")
         print("Escribiendo póliza Santander")
@@ -37,7 +37,7 @@ class BusquedaSantander:
         # 2. Buscar
         print("Clic en botón Buscar...")
         self.bot._click_js(SELECTOR_BTN_BUSCAR)
-        time.sleep(2)
+
         # 3 Llamar al método interno para seleccionar en la tabla
         self.procesar_seleccion_en_tabla()
 
@@ -47,11 +47,10 @@ class BusquedaSantander:
         """
         print("Clic en botón Buscar...")
         self.bot._click_js(SELECTOR_BTN_BUSCAR)
-        time.sleep(2)
         print("Seleccionando registro en la tabla...")
         # Nota: Usamos self.bot._click_js porque la función _click_js vive en el bot principal
         self.bot._click_js(SELECTOR_CHECKBOX_LABEL)
-        time.sleep(2)
+        time.sleep(1)
         
         print("Clic en botón Seleccionar...")
         self.bot._click_js(SELECTOR_BTN_SELECCIONAR)

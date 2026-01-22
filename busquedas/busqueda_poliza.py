@@ -56,5 +56,5 @@ class BusquedaPoliza:
         
         print("Aceptando confirmaciones...")
         self.bot._click_js(SELECTOR_BTN_ACEPTAR)
-        time.sleep(10)
+        time.sleep(15)
         self.bot._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
