@@ -326,7 +326,7 @@ class Atlas:
         self._click_js(SELECTOR_RADIO_GROUP_6_NO)
         self._click_js(SELECTOR_RADIO_GROUP_7_NO)
 
-    def buscar_poliza_dinamica(self, criterio="SERIE"):
+    def buscar_poliza_dinamica(self, criterio="INCISO"):
         """
         Función orquestadora que decide qué estrategia usar.
         :param criterio: String ('POLIZA', 'SERIE', 'PLACAS')
@@ -347,10 +347,13 @@ class Atlas:
                 print("Eligiendo opción 'Serie'...")
                 self._click_js(OPCION_DROPDOWN_SERIE)
             elif criterio == "PLACAS":
+                print("Eligiendo opcin 'Placas'...")
                 self._click_js(OPCION_DROPDOWN_PLACAS)
             elif criterio == "SANTANDER":
+                print("Eligiendo opcin 'Santander'...")
                 self._click_js(OPCION_DROPDOWN_SANTANDER)
             elif criterio == "INCISO":
+                print("Eligiendo opcin 'Inciso'...")
                 self._click_js(OPCION_DROPDOWN_INCISO)
             else:
                 return
