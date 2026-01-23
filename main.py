@@ -326,7 +326,7 @@ class Atlas:
         self._click_js(SELECTOR_RADIO_GROUP_6_NO)
         self._click_js(SELECTOR_RADIO_GROUP_7_NO)
 
-    def buscar_poliza_dinamica(self, criterio="SANTANDER"):
+    def buscar_poliza_dinamica(self, criterio="PLACAS"):
         """
         Función orquestadora que decide qué estrategia usar.
         :param criterio: String ('POLIZA', 'SERIE', 'PLACAS')

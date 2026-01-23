@@ -8,7 +8,6 @@ SELECTOR_INPUT_INCISO = (By.CSS_SELECTOR, "input[formcontrolname='p_inciso']")
 SELECTOR_BTN_BUSCAR = (By.XPATH, "//button[contains(., 'Buscar')]")
 
 # --- SELECTORES COMUNES (TABLA DE RESULTADOS) ---
-# Se definen aquí para que la clase los pueda usar
 SELECTOR_CHECKBOX_LABEL = (By.XPATH, "(//td[contains(@class, 'mat-column-checkbox')]//label)[1]")
 SELECTOR_BTN_SELECCIONAR = (By.XPATH, "//button[contains(., 'Seleccionar')]")
 SELECTOR_BTN_ACEPTAR = (By.XPATH, "//button[contains(., 'Aceptar')]")
@@ -22,7 +21,7 @@ class BusquedaPoliza:
         self.bot = bot_instance
 
     def ejecutar(self):
-        print(">> [Estrategia] Iniciando búsqueda por Póliza...")
+        print(">> [Estrategia] Iniciando búsqueda por Póliza (Tradicional)...")
 
         # 1. Llenar campos específicos
         print("Escribiendo sucursal, póliza e inciso...")
@@ -41,20 +40,32 @@ class BusquedaPoliza:
         """
         Lógica reutilizable para seleccionar el resultado y manejar popups.
         """
-        print("Seleccionando registro en la tabla...")
-        # Nota: Usamos self.bot._click_js porque la función _click_js vive en el bot principal
+        print("Esperando resultados y seleccionando registro...")
+        
+        # 1. Espera de seguridad para que la tabla cargue
+        time.sleep(3) 
+        
+        # Seleccionamos el primer resultado
         self.bot._click_js(SELECTOR_CHECKBOX_LABEL)
         time.sleep(1)
         
         print("Clic en botón Seleccionar...")
         self.bot._click_js(SELECTOR_BTN_SELECCIONAR)
-        time.sleep(4)
         
-        # Doble confirmación habitual
-        self.bot._click_js(SELECTOR_BTN_SELECCIONAR)
+        # 2. Espera para animaciones
+        time.sleep(2)
+        
+        # 3. Doble confirmación segura (si el botón sigue ahí, le damos click)
+        try:
+            self.bot._click_js(SELECTOR_BTN_SELECCIONAR)
+        except:
+            pass # Si ya desapareció, continuamos sin error
+        
         time.sleep(2)
         
         print("Aceptando confirmaciones...")
         self.bot._click_js(SELECTOR_BTN_ACEPTAR)
-        time.sleep(15)
+        
+        # 4. Espera larga para la alerta final
+        time.sleep(5)
         self.bot._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
