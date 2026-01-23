@@ -27,7 +27,7 @@ class BusquedaSantander:
 
         # 1. Llenar campos específicos
         print("Escribiendo canal")
-        self.bot._escribir_js(SELECTOR_INPUT_CANAL, "6")
+        self.bot._escribir_js(SELECTOR_INPUT_CANAL, "06")
         print("Escribiendo ramo")
         self.bot._escribir_js(SELECTOR_INPUT_RAMO, "91")
         print("Escribiendo póliza Santander")

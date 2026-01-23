@@ -219,9 +219,9 @@ class Atlas:
         print("Esperando que desaparezca la pantalla de carga (contenedorBlock)...")
         self._esperar_desaparicion((By.CSS_SELECTOR, ".contenedorBlock"))
         print("Intentando de encontrar los campos de datos del reportante...")
-        self._escribir(INPUT_NOMBRE, "AN")
-        self._escribir(INPUT_PATERNO, "Apellido Paterno")
-        self._escribir(INPUT_MATERNO, "Apellido Materno")
+        self._escribir(INPUT_NOMBRE, "Juan")
+        self._escribir(INPUT_PATERNO, "Galindo")
+        self._escribir(INPUT_MATERNO, "Peres")
 
         # Primer Teléfono
         print("Llenando primer teléfono...")
@@ -326,7 +326,7 @@ class Atlas:
         self._click_js(SELECTOR_RADIO_GROUP_6_NO)
         self._click_js(SELECTOR_RADIO_GROUP_7_NO)
 
-    def buscar_poliza_dinamica(self, criterio="INCISO"):
+    def buscar_poliza_dinamica(self, criterio="SANTANDER"):
         """
         Función orquestadora que decide qué estrategia usar.
         :param criterio: String ('POLIZA', 'SERIE', 'PLACAS')
@@ -393,31 +393,43 @@ class Atlas:
         print("Navegando al menú de Seguimiento de Ajustadores...")
         self._click_js(SELECTOR_MENU_SEGUIMIENTO)
         
-        # Damos tiempo a que cargue la nueva página completamente
-        time.sleep(5)
-        
-        print("Seleccionando la pestaña 'Por Asignar'...")
-        self._click_js(SELECTOR_TAB_POR_ASIGNAR)
-        
+        # CAMBIO CLAVE: Esperar explícitamente a que la pestaña sea VISIBLE antes de clickear
+        print("Esperando a que la pestaña 'Por Asignar' sea visible...")
+        try:
+            # Esperamos hasta 10 segundos a que el elemento aparezca visualmente
+            pestana = self.wait.until(EC.visibility_of_element_located(SELECTOR_TAB_POR_ASIGNAR))
+            
+            # Pequeña pausa de seguridad para animaciones de Angular
+            time.sleep(3) 
+            
+            # Click forzado con JS sobre el elemento ya encontrado
+            self.driver.execute_script("arguments[0].click();", pestana)
+            print(">> Pestaña 'Por Asignar' seleccionada con éxito.")
+            
+        except Exception as e:
+            print("ERROR: No se pudo encontrar o clickear la pestaña 'Por Asignar'.")
+            # Esto guardará una foto para que veas qué pasó si vuelve a fallar
+            self.driver.save_screenshot("debug_error_pestana.png")
+            raise e
+
         print("Esperando a que cargue la tabla de registros...")
-        # Aumentamos el tiempo de espera para asegurar que la tabla aparezca
-        time.sleep(5) 
+        # Espera para que la tabla rellene los datos
+        time.sleep(4) 
         
         print("Intentando asignar la primera fila...")
         try:
-            # Usamos el wait explícito para asegurar que el botón es clickeable
-            # Esto evita el error fatal si el botón no está listo
+            # Esperamos a que el botón de asignar sea clickeable
             btn_asignar = self.wait.until(EC.element_to_be_clickable(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA))
             
-            # Scroll y Click seguro
+            # Scroll suave hacia el botón y click
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar)
-            time.sleep(1) # Pequeña pausa tras el scroll
+            time.sleep(1) 
             self.driver.execute_script("arguments[0].click();", btn_asignar)
-            print(">> Botón 'Asignar' clickeado correctamente.")
+            print(">> Botón 'Asignar' de la primera fila clickeado correctamente.")
             
         except Exception as e:
             print(f"ADVERTENCIA: No se pudo clickear el botón 'Asignar'. "
-                  f"Puede que la tabla esté vacía o tardó demasiado. Detalles: {e}")
+                  f"Puede que la tabla esté vacía o tardó demasiado en cargar. Detalles: {e}")
 
     def seleccionar_ajustador(self):
         print("Seleccionando ajustador manualmente...")
