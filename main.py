@@ -391,45 +391,61 @@ class Atlas:
 
     def seguimiento_ajustadores(self):
         print("Navegando al menú de Seguimiento de Ajustadores...")
+        
+        # 1. Pequeña pausa para asegurar que el modal anterior (SweetAlert) desapareció completamente
+        time.sleep(2) 
+        
+        # Clic en el menú
         self._click_js(SELECTOR_MENU_SEGUIMIENTO)
         
-        # CAMBIO CLAVE: Esperar explícitamente a que la pestaña sea VISIBLE antes de clickear
-        print("Esperando a que la pestaña 'Por Asignar' sea visible...")
+        print("Esperando carga de la pantalla de Seguimiento...")
+        # Damos tiempo a que cargue la nueva página (aumentado por seguridad)
+        time.sleep(5)
+        
+        print("Seleccionando la pestaña 'Por Asignar'...")
         try:
-            # Esperamos hasta 10 segundos a que el elemento aparezca visualmente
-            pestana = self.wait.until(EC.visibility_of_element_located(SELECTOR_TAB_POR_ASIGNAR))
+            # 2. CAMBIO CLAVE: Esperar a que el elemento sea VISIBLE, no solo presente
+            tab_element = self.wait.until(EC.visibility_of_element_located(SELECTOR_TAB_POR_ASIGNAR))
             
-            # Pequeña pausa de seguridad para animaciones de Angular
-            time.sleep(3) 
+            # 3. Movernos al elemento para asegurar que nada lo tapa
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tab_element)
+            time.sleep(1) # Pausa para que el scroll termine
             
-            # Click forzado con JS sobre el elemento ya encontrado
-            self.driver.execute_script("arguments[0].click();", pestana)
-            print(">> Pestaña 'Por Asignar' seleccionada con éxito.")
-            
-        except Exception as e:
-            print("ERROR: No se pudo encontrar o clickear la pestaña 'Por Asignar'.")
-            # Esto guardará una foto para que veas qué pasó si vuelve a fallar
-            self.driver.save_screenshot("debug_error_pestana.png")
-            raise e
+            # 4. Intentar clic
+            # Intentamos clic nativo primero (es más seguro para detectar si algo lo tapa)
+            try:
+                tab_element.click()
+            except Exception:
+                # Si falla, forzamos con JS
+                print("Clic nativo falló, forzando con JS...")
+                self.driver.execute_script("arguments[0].click();", tab_element)
+                
+            print(">> Pestaña 'Por Asignar' seleccionada.")
 
+        except Exception as e:
+            print(f"ERROR: No se pudo encontrar o clickear la pestaña 'Por Asignar'. Detalles: {e}")
+            # Opcional: Imprimir el código fuente para depurar si el error persiste
+            # print(self.driver.page_source)
+            raise # Re-lanzamos el error para detener el bot si esto falla
+        
         print("Esperando a que cargue la tabla de registros...")
-        # Espera para que la tabla rellene los datos
-        time.sleep(4) 
+        # Aumentamos el tiempo de espera para asegurar que la tabla aparezca
+        time.sleep(5) 
         
         print("Intentando asignar la primera fila...")
         try:
-            # Esperamos a que el botón de asignar sea clickeable
+            # Usamos el wait explícito para asegurar que el botón es clickeable
             btn_asignar = self.wait.until(EC.element_to_be_clickable(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA))
             
-            # Scroll suave hacia el botón y click
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar)
             time.sleep(1) 
             self.driver.execute_script("arguments[0].click();", btn_asignar)
-            print(">> Botón 'Asignar' de la primera fila clickeado correctamente.")
+            print(">> Botón 'Asignar' clickeado correctamente.")
             
         except Exception as e:
             print(f"ADVERTENCIA: No se pudo clickear el botón 'Asignar'. "
-                  f"Puede que la tabla esté vacía o tardó demasiado en cargar. Detalles: {e}")
+                  f"Puede que la tabla esté vacía o tardó demasiado. Detalles: {e}")
+
 
     def seleccionar_ajustador(self):
         print("Seleccionando ajustador manualmente...")
