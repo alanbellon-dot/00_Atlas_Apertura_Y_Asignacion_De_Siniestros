@@ -245,11 +245,6 @@ class Atlas:
         self._click_js(CHECKBOX_CONDUCTOR) 
         self._click_js(CHECKBOX_1)
 
-
-    # ==========================================
-    # 4. LÓGICA DE NEGOCIO
-    # ==========================================
-
     def ubicacion_del_siniestro(self):
         """
         Despliega el buscador del mapa y escribe la dirección.
