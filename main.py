@@ -481,6 +481,17 @@ class Atlas:
 # ==========================================
 
 if __name__ == "__main__":
+    # 1. PREGUNTAR AL USUARIO ANTES DE INICIAR EL BOT
+    print("\n--- CONFIGURACIÓN INICIAL ---")
+    print("Opciones disponibles: POLIZA, SERIE, PLACAS, SANTANDER, INCISO")
+    criterio_usuario = input("Ingrese el criterio de búsqueda deseado en mayusculas: ").strip().upper()
+    
+    # Validación: Si el usuario solo da Enter, usar un valor por defecto
+    if not criterio_usuario:
+        print("Entrada vacía. Se usará el valor por defecto: PLACAS")
+        criterio_usuario = "PLACAS"
+
+    # 2. INICIAR EL BOT
     # Ahora sí coincide el argumento con el __init__
     bot = Atlas(headless=False)
     
@@ -492,13 +503,12 @@ if __name__ == "__main__":
         bot.finalizar_registro()
         bot.datos_del_siniestro()
         bot.ajuste_remoto()
-        bot.buscar_poliza_dinamica()
+        
+        # 3. PASAR LA VARIABLE CAPTURADA AL INICIO
+        bot.buscar_poliza_dinamica(criterio=criterio_usuario)
+        
         bot.seguimiento_ajustadores()
         bot.seleccionar_ajustador()        
-
-
-
-
 
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
