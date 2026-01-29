@@ -14,12 +14,6 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
 
-
-
-# ==========================================
-# 1. CONFIGURACIÓN Y CONSTANTES
-# ==========================================
-
 # --- Datos de acceso ---
 BASE_URL = "https://prometeo-qa-demo.web.app/login"
 USERNAME = "Testing"
@@ -36,7 +30,6 @@ INPUT_PASS = (By.CSS_SELECTOR, "input[formcontrolname='password']")
 
 # Selector genérico para el botón (ajustar si es necesario)
 BTN_LOGIN  = (By.XPATH, "//button[contains(., 'Ingresar')]")
-
 
 # --- SELECTORES: DATOS DEL REPORTANTE ---
 INPUT_NOMBRE = (By.CSS_SELECTOR, "input[formcontrolname='nombre']")
@@ -60,7 +53,6 @@ BTN_LUPA = (By.CSS_SELECTOR, "button[aria-label='Btn búsqueda']")
 INPUT_MAPA = (By.CSS_SELECTOR, "input.pac-target-input")
 BTN_CREAR_FOLIO = (By.XPATH, "//button[contains(text(), 'Crear folio')]")
 
-
 # --- SELECTORES: DATOS DEL SINIESTRO ---
 BTN_CALENDARIO = (By.CSS_SELECTOR, "mat-datepicker-toggle button")
 BTN_DIA_HOY = (By.CSS_SELECTOR, "button[aria-current='date']")
@@ -76,7 +68,6 @@ SELECTOR_RADIO_GROUP_5_NO = (By.XPATH, "//input[@name='mat-radio-group-5' and @v
 SELECTOR_RADIO_GROUP_6_NO = (By.XPATH, "//input[@name='mat-radio-group-6' and @value='false']")
 SELECTOR_RADIO_GROUP_7_NO = (By.XPATH, "//input[@name='mat-radio-group-7' and @value='false']")
 
-
 # --- SELECTORES: BÚSQUEDA GENÉRICA ---
 # Selector para abrir el dropdown que dice "Buscar por"
 SELECTOR_DROPDOWN_CRITERIO = (By.XPATH, "//mat-label[contains(text(), 'Buscar por')]/ancestor::mat-form-field//mat-select")
@@ -88,14 +79,12 @@ OPCION_DROPDOWN_PLACAS = (By.XPATH, "//mat-option//span[contains(text(), 'Placas
 OPCION_DROPDOWN_SANTANDER = (By.XPATH, "//mat-option//span[contains(text(), 'Santander')]")
 OPCION_DROPDOWN_INCISO = (By.XPATH, "//mat-option//span[contains(text(), 'Inciso')]")
 
-
 # --- SELECTORES COMUNES (TABLA DE RESULTADOS) ---
 SELECTOR_CHECKBOX_LABEL = (By.XPATH, "(//td[contains(@class, 'mat-column-checkbox')]//label)[1]")
 SELECTOR_BTN_SELECCIONAR = (By.XPATH, "//button[contains(., 'Seleccionar')]")
 BTN_DESPLEGABLE_ACEPTAR = (By.XPATH, "//button[text()='Aceptar']")
 SELECTOR_BTN_ACEPTAR_WARNING = (By.XPATH, "//button[@status='warning' and contains(normalize-space(), 'Aceptar')]")
 SELECTOR_BTN_SWAL_ACEPTAR = (By.XPATH, "//button[contains(@class, 'swal2') and contains(., 'Aceptar')]")
-
 
 # --- SELECTORES ASIGNACIÓN MANUAL ---
 BTN_LUPITA = (By.XPATH, "(//button[.//mat-icon[contains(text(), 'search')]])[2]")
@@ -113,9 +102,6 @@ SELECTOR_BTN_ACEPTAR = (By.XPATH, "//button[@type='submit' and contains(normaliz
 SELECTOR_BTN_ACTUALIZAR = (By.XPATH, "//button[@ng-reflect-message='Actualizar tabla']")
 SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains(normalize-space(), 'Asignar')]")
 
-
-
-
 # --- SELECTORES: MENÚ SEGUIMIENTO AJUSTADORES ---
 SELECTOR_MENU_SEGUIMIENTO = (By.XPATH, "//a[@title='Seguimiento ajustadores']")
 SELECTOR_TAB_POR_ASIGNAR = (By.XPATH, "//span[contains(., 'Por Asignar')]")
@@ -127,12 +113,6 @@ SELECTOR_BTN_ASIGNACION_MANUAL = (By.XPATH, "//button[contains(., 'Asignación m
 SELECTOR_TXT_ASIGNAR = (By.XPATH, "//span[normalize-space()='Asignar']")
 SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains(., 'Asignar')]")
 
-
-
-# ==========================================
-# 2. CLASE PRINCIPAL DEL BOT
-# ==========================================
-
 class Atlas:
     def __init__(self, headless=False):
         """
@@ -141,21 +121,17 @@ class Atlas:
         """
         print("Inicializando configuración del Bot...")
         
-        # 1. LIMPIEZA DE ZOMBIES
         try:
             os.system("taskkill /f /im chromedriver.exe >nul 2>&1")
             time.sleep(1) 
         except:
             pass
 
-        # 2. CONFIGURACIÓN DE CHROME
         chrome_options = Options()
         
-        # Modo Headless (sin interfaz gráfica) si se solicita
         if headless:
             chrome_options.add_argument("--headless=new")
 
-        # Desactivar guardar contraseñas y popups molestos
         prefs = {
             "credentials_enable_service": False, 
             "profile.password_manager_enabled": False,
@@ -163,23 +139,18 @@ class Atlas:
         }
         chrome_options.add_experimental_option("prefs", prefs)
 
-        # Configuración anti-detección y estabilidad
         chrome_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         chrome_options.add_experimental_option('useAutomationExtension', False)
         chrome_options.add_argument("--remote-allow-origins=*")
         chrome_options.add_argument("--disable-blink-features=AutomationControlled")
         chrome_options.add_argument("--start-maximized")
 
-        # 3. INICIAR EL DRIVER
         self.driver = webdriver.Chrome(options=chrome_options)
         self.wait = WebDriverWait(self.driver, 10)
         
         print("Bot iniciado correctamente.")
 
-    # ==========================================
-    # 3. MÉTODOS AUXILIARES (WRAPPERS)
-    # ==========================================
-    
+
     def _click(self, locator):
         """Espera a que un elemento sea clickeable y hace click."""
         try:
@@ -192,9 +163,8 @@ class Atlas:
     def _click_scroll_js(self, locator):
         """Localiza, hace scroll hasta el elemento, espera un momento y da clic."""
         element = self._esperar_elemento(locator)
-        # Scroll suave para poner el elemento en el centro
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-        time.sleep(1) # Pausa importante para que la animación del scroll termine
+        time.sleep(1)
         self.driver.execute_script("arguments[0].click();", element)
 
 
@@ -229,10 +199,6 @@ class Atlas:
         except Exception as e:
             print(f"Advertencia: El elemento {locator} no desapareció o no existía: {e}")
 
-    # ==========================================
-    # 4. LÓGICA DE NEGOCIO
-    # ==========================================
-
     def iniciar_sesion(self):
         print(f"Navegando a {BASE_URL}...")
         self.driver.get(BASE_URL)
@@ -253,14 +219,11 @@ class Atlas:
         self._escribir(INPUT_PATERNO, "Galindo")
         self._escribir(INPUT_MATERNO, "Peres")
 
-        # Primer Teléfono
         print("Llenando primer teléfono...")
         self._click(BTN_DESPLEGABLE)    # Abre el menú 1
         self._click(OPCION_CELULAR)     # Elige Celular
         self._escribir(INPUTS_TELEFONO, "5555555555")
         
-
-        # Segundo Teléfono
         print("Llenando segundo teléfono...")
         self._click(BTN_DESPLEGABLE_CONFIRM)  # Abre el menú 2
         self._click(OPCION_CELULAR_CONFIRM)           # Elige Celular
@@ -289,7 +252,6 @@ class Atlas:
             direccion = "Metrobús Nápoles, Avenida Insurgentes Sur, Colonia Nápoles, Mexico City, CDMX, Mexico"
             self._escribir(INPUT_MAPA, direccion)
             
-            # 4. Opcional: Presionar ENTER para que el mapa busque
             self._esperar_elemento(INPUT_MAPA).send_keys(Keys.ENTER)
             
             print(f">> Dirección '{direccion}' ingresada con éxito.")
@@ -302,14 +264,11 @@ class Atlas:
     def finalizar_registro(self):
         print("Finalizando registro...")
         try:
-            # 1. Localizar elemento
             elemento = self._esperar_elemento(BTN_CREAR_FOLIO)
             
-            # 2. Scroll hacia el elemento para que esté visible
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", elemento)
             time.sleep(1)
             
-            # 3. Clic vía JavaScript
             self.driver.execute_script("arguments[0].click();", elemento)
             
             print(">> Clic exitoso en Crear Folio.")
@@ -321,7 +280,7 @@ class Atlas:
     
     def datos_del_siniestro(self):
         print("Llenando datos del siniestro...")
-        time.sleep(2)  # Esperar a que la sección esté lista
+        time.sleep(2)
         print("Dando clic en el calendario...")
         self._click_js(BTN_CALENDARIO)
         time.sleep(1)
@@ -330,9 +289,8 @@ class Atlas:
         print("Escribiendo hechos...")
         campo = self._esperar_elemento(TEXTAREA_HECHOS)
         
-        # Scroll y Click forzado en una sola línea de JS
         self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'}); arguments[0].click();", campo)
-        time.sleep(0.5) # Pausa breve para estabilidad
+        time.sleep(0.5)
         
         campo.send_keys("El conductor perdió el control del vehículo y chocó contra un poste.")
         print(">> Hechos listos.")
@@ -341,8 +299,6 @@ class Atlas:
         print("Seleccionando color del vehículo...")
         self._click_js(BTN_COLOR)                    
         self._click(OPCION_COLOR_AMARILLO)
-        
-
 
     def ajuste_remoto(self):
         print("Seleccionando opción 'No' para ajuste remoto...")
@@ -358,12 +314,10 @@ class Atlas:
         """
         print(f"--- Iniciando módulo de búsqueda por: {criterio} ---")
 
-        # 1. SELECCIONAR EL CRITERIO EN EL DROPDOWN
-        # Primero verificamos si necesitamos cambiar el dropdown
         try:
             print(f"Abriendo menú 'Buscar por'...")
             self._click_js(SELECTOR_DROPDOWN_CRITERIO)
-            time.sleep(1) # Esperar animación del menú
+            time.sleep(1)
 
             if criterio == "POLIZA":
                 print("Eligiendo opción 'Póliza'...")
@@ -383,16 +337,12 @@ class Atlas:
             else:
                 return
             
-            # Pequeña pausa para que Angular renderice los inputs correspondientes
             time.sleep(1)
             
         except Exception as e:
             print(f"Error seleccionando el criterio en el dropdown: {e}")
-            # Si falla, quizás ya estaba seleccionado por defecto, intentamos continuar...
 
-        # 2. EJECUTAR LA ESTRATEGIA CORRESPONDIENTE
         if criterio == "POLIZA":
-            # Instanciamos la clase y le pasamos 'self' (este bot Atlas)
             estrategia = BusquedaPoliza(self)
             estrategia.ejecutar()
             
@@ -420,24 +370,20 @@ class Atlas:
         """
         print("Esperando resultados y seleccionando registro...")
         
-        # 1. Espera de seguridad para que la tabla cargue
         time.sleep(3) 
         
-        # Seleccionamos el primer resultado
         self._click_js(SELECTOR_CHECKBOX_LABEL)
         time.sleep(1)
         
         print("Clic en botón Seleccionar...")
         self._click_js(SELECTOR_BTN_SELECCIONAR)
         
-        # 2. Espera para animaciones
         time.sleep(2)
         
-        # 3. Doble confirmación segura (si el botón sigue ahí, le damos click)
         try:
             self._click_js(SELECTOR_BTN_SELECCIONAR)
         except:
-            pass # Si ya desapareció, continuamos sin error
+            pass
         
         time.sleep(2)
         
@@ -446,13 +392,12 @@ class Atlas:
         try:
             self._click_js(BTN_DESPLEGABLE_ACEPTAR)
             print("Botón desplegable aceptado.")
-            time.sleep(5) # Pequeña espera por si hay animación tras este clic
+            time.sleep(5)
         except Exception as e:
             print("El botón desplegable no apareció, continuando con el flujo normal...")
 
         self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)
         
-        # 4. Espera larga para la alerta final
         time.sleep(5)
         self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
         
@@ -470,16 +415,13 @@ class Atlas:
         print("Seleccionando Asignación manual...")
         self._click(SELECTOR_BTN_ASIGNACION_MANUAL)
         
-        # --- LÓGICA DE ASIGNACIÓN ---
         NOMBRE_OBJETIVO = "MANUEL ALEJANDRO BOLAÑOS GAMIÑO"
         print(f"Buscando a: {NOMBRE_OBJETIVO}...")
         time.sleep(2)
 
-        # Buscar botón Asignar dentro de la fila del ajustador (EN LA VENTANA MODAL)
         xpath_dinamico = f"//tr[.//span[contains(normalize-space(), '{NOMBRE_OBJETIVO}')]]//span[contains(normalize-space(), 'Asignar')]"
         
         try:
-            # 1. ASIGNACIÓN
             btn_asignar_especifico = self.driver.find_element(By.XPATH, xpath_dinamico)
             print(f"¡Encontrado! Asignando a {NOMBRE_OBJETIVO}...")
             
@@ -489,27 +431,20 @@ class Atlas:
             
             time.sleep(1)
             self._click(SELECTOR_BTN_ASIGNAR_FINAL)
-
-            # ==========================================================
-            #   VERIFICACIÓN EN LA PRIMERA FILA DE LA TABLA
-            # ==========================================================
             
             print("Esperando 5 minutos (305s)...")
             time.sleep(305) 
-            # time.sleep(5) # <--- (Solo para pruebas rápidas)
 
             print("Cerrando modal para leer la tabla principal...")
             self._click_js(SELECTOR_BTN_CERRAR_MODAL)
             time.sleep(3) # Espera para que se vea la tabla de fondo
             
-            # --- CAMBIO CLAVE: NO BUSCAMOS POR NOMBRE, SINO LA PRIMERA FILA ---
-            # Buscamos la columna 'estatus' de la PRIMERA fila de la tabla (tr[1])
+
             xpath_estatus_primera_fila = "//tbody/tr[1]//td[contains(@class, 'mat-column-estatus')]"
             
             celdas = self.driver.find_elements(By.XPATH, xpath_estatus_primera_fila)
 
             if celdas:
-                # Extraemos el texto (ej. "Pendiente", "Aceptada", "Registrada")
                 texto_estatus = celdas[0].text.strip().upper()
                 
                 print(f"👀 EL ROBOT LEYÓ EN LA PRIMERA FILA: '{texto_estatus}'")
@@ -525,9 +460,6 @@ class Atlas:
             else:
                 print("❌ ERROR CRÍTICO: No se encontró la primera fila de la tabla. Cancelando por seguridad.")
 
-            # ==========================================================
-            #   FLUJO DE CANCELACIÓN
-            # ==========================================================
 
             print("Re-abriendo detalles (Lupa) para cancelar...")
             time.sleep(2)
@@ -637,9 +569,7 @@ class Atlas:
         except Exception:
             pass
 
-# ==========================================
-# 5. EJECUCIÓN
-# ==========================================
+
 
 if __name__ == "__main__":
     print("\n--- CONFIGURACIÓN INICIAL ---")
