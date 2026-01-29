@@ -5,12 +5,14 @@ from busquedas.busqueda_santader import BusquedaSantander
 from busquedas.busqueda_inciso import BusquedaInciso
 import time
 import os
+import sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 
 
 
@@ -87,6 +89,33 @@ OPCION_DROPDOWN_SANTANDER = (By.XPATH, "//mat-option//span[contains(text(), 'San
 OPCION_DROPDOWN_INCISO = (By.XPATH, "//mat-option//span[contains(text(), 'Inciso')]")
 
 
+# --- SELECTORES COMUNES (TABLA DE RESULTADOS) ---
+SELECTOR_CHECKBOX_LABEL = (By.XPATH, "(//td[contains(@class, 'mat-column-checkbox')]//label)[1]")
+SELECTOR_BTN_SELECCIONAR = (By.XPATH, "//button[contains(., 'Seleccionar')]")
+BTN_DESPLEGABLE_ACEPTAR = (By.XPATH, "//button[text()='Aceptar']")
+SELECTOR_BTN_ACEPTAR_WARNING = (By.XPATH, "//button[@status='warning' and contains(normalize-space(), 'Aceptar')]")
+SELECTOR_BTN_SWAL_ACEPTAR = (By.XPATH, "//button[contains(@class, 'swal2') and contains(., 'Aceptar')]")
+
+
+# --- SELECTORES ASIGNACIÓN MANUAL ---
+BTN_LUPITA = (By.XPATH, "(//button[.//mat-icon[contains(text(), 'search')]])[2]")
+SELECTOR_BTN_AGREGAR_AJUSTADOR = (By.XPATH, "//span[contains(@class, 'mdc-button__label') and contains(text(), 'Agregar Ajustador')]")
+SELECTOR_BTN_ASIGNACION_MANUAL = (By.XPATH, "//button[contains(normalize-space(), 'Asignación manual')]")
+SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains(normalize-space(), 'Asignar')]")
+SELECTOR_BTN_CERRAR_MODAL = (By.XPATH, "//button[contains(@class, 'btn-cerrar-modal')]")
+SELECTOR_BTN_CAMBIAR_ESTATUS = (By.XPATH, "//span[contains(@class, 'mdc-button__label') and contains(normalize-space(), 'Cambiar Estatus')]")
+SELECTOR_DROPDOWN_ESTATUS = (By.CSS_SELECTOR, "mat-select[formcontrolname='idEstatus']")
+SELECTOR_DROPDOWN_MOTIVO = (By.CSS_SELECTOR, "mat-select[formcontrolname='idMotivo']")
+SELECTOR_OPCION_PENDIENTE = (By.XPATH, "//mat-option//span[contains(normalize-space(), 'Pendiente')]")
+SELECTOR_TEXTAREA_OBSERVACIONES = (By.CSS_SELECTOR, "textarea[formcontrolname='observaciones']")
+SELECTOR_OPCION_NO_LOCALIZADO = (By.XPATH, "//mat-option//span[contains(normalize-space(), 'No localizado')]")
+SELECTOR_BTN_ACEPTAR = (By.XPATH, "//button[@type='submit' and contains(normalize-space(), 'Aceptar')]")
+SELECTOR_BTN_ACTUALIZAR = (By.XPATH, "//button[@ng-reflect-message='Actualizar tabla']")
+SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains(normalize-space(), 'Asignar')]")
+
+
+
+
 # --- SELECTORES: MENÚ SEGUIMIENTO AJUSTADORES ---
 SELECTOR_MENU_SEGUIMIENTO = (By.XPATH, "//a[@title='Seguimiento ajustadores']")
 SELECTOR_TAB_POR_ASIGNAR = (By.XPATH, "//span[contains(., 'Por Asignar')]")
@@ -158,6 +187,7 @@ class Atlas:
         except Exception as e:
             print(f"Error al intentar click en {locator}: {e}")
             raise
+    
 
     def _click_scroll_js(self, locator):
         """Localiza, hace scroll hasta el elemento, espera un momento y da clic."""
@@ -382,7 +412,156 @@ class Atlas:
             estrategia = BusquedaInciso(self)
             estrategia.ejecutar()
         else:
-            return   
+            return
+
+    def procesar_seleccion_en_tabla(self):
+        """
+        Lógica reutilizable para seleccionar el resultado y manejar popups.
+        """
+        print("Esperando resultados y seleccionando registro...")
+        
+        # 1. Espera de seguridad para que la tabla cargue
+        time.sleep(3) 
+        
+        # Seleccionamos el primer resultado
+        self._click_js(SELECTOR_CHECKBOX_LABEL)
+        time.sleep(1)
+        
+        print("Clic en botón Seleccionar...")
+        self._click_js(SELECTOR_BTN_SELECCIONAR)
+        
+        # 2. Espera para animaciones
+        time.sleep(2)
+        
+        # 3. Doble confirmación segura (si el botón sigue ahí, le damos click)
+        try:
+            self._click_js(SELECTOR_BTN_SELECCIONAR)
+        except:
+            pass # Si ya desapareció, continuamos sin error
+        
+        time.sleep(2)
+        
+        print("Aceptando confirmaciones...")
+ 
+        try:
+            self._click_js(BTN_DESPLEGABLE_ACEPTAR)
+            print("Botón desplegable aceptado.")
+            time.sleep(5) # Pequeña espera por si hay animación tras este clic
+        except Exception as e:
+            print("El botón desplegable no apareció, continuando con el flujo normal...")
+
+        self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)
+        
+        # 4. Espera larga para la alerta final
+        time.sleep(5)
+        self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
+        
+
+
+    def asignacion_manual(self):
+        print("Damos clic a la lupita")
+        time.sleep(2)
+        self._click(BTN_LUPITA)
+        
+        time.sleep(2)
+        print("Dando clic en Agregar Ajustador...")
+        self._click(SELECTOR_BTN_AGREGAR_AJUSTADOR)
+        
+        print("Seleccionando Asignación manual...")
+        self._click(SELECTOR_BTN_ASIGNACION_MANUAL)
+        
+        # --- LÓGICA DE ASIGNACIÓN ---
+        NOMBRE_OBJETIVO = "MANUEL ALEJANDRO BOLAÑOS GAMIÑO"
+        print(f"Buscando a: {NOMBRE_OBJETIVO}...")
+        time.sleep(2)
+
+        # Buscar botón Asignar dentro de la fila del ajustador (EN LA VENTANA MODAL)
+        xpath_dinamico = f"//tr[.//span[contains(normalize-space(), '{NOMBRE_OBJETIVO}')]]//span[contains(normalize-space(), 'Asignar')]"
+        
+        try:
+            # 1. ASIGNACIÓN
+            btn_asignar_especifico = self.driver.find_element(By.XPATH, xpath_dinamico)
+            print(f"¡Encontrado! Asignando a {NOMBRE_OBJETIVO}...")
+            
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar_especifico)
+            time.sleep(1)
+            self.driver.execute_script("arguments[0].click();", btn_asignar_especifico)
+            
+            time.sleep(1)
+            self._click(SELECTOR_BTN_ASIGNAR_FINAL)
+
+            # ==========================================================
+            #   VERIFICACIÓN EN LA PRIMERA FILA DE LA TABLA
+            # ==========================================================
+            
+            print("Esperando 5 minutos (305s)...")
+            time.sleep(305) 
+            # time.sleep(5) # <--- (Solo para pruebas rápidas)
+
+            print("Cerrando modal para leer la tabla principal...")
+            self._click_js(SELECTOR_BTN_CERRAR_MODAL)
+            time.sleep(3) # Espera para que se vea la tabla de fondo
+            
+            # --- CAMBIO CLAVE: NO BUSCAMOS POR NOMBRE, SINO LA PRIMERA FILA ---
+            # Buscamos la columna 'estatus' de la PRIMERA fila de la tabla (tr[1])
+            xpath_estatus_primera_fila = "//tbody/tr[1]//td[contains(@class, 'mat-column-estatus')]"
+            
+            celdas = self.driver.find_elements(By.XPATH, xpath_estatus_primera_fila)
+
+            if celdas:
+                # Extraemos el texto (ej. "Pendiente", "Aceptada", "Registrada")
+                texto_estatus = celdas[0].text.strip().upper()
+                
+                print(f"👀 EL ROBOT LEYÓ EN LA PRIMERA FILA: '{texto_estatus}'")
+
+                if "ACEPTADA" in texto_estatus:
+                    print("✅ ¡DETECTADO! El estatus es ACEPTADA.")
+                    print("🛑 APAGANDO EL PROGRAMA.")
+                    self.driver.quit()
+                    sys.exit()
+                else:
+                    print(f"⚠️ El estatus NO es Aceptada (Es '{texto_estatus}').")
+                    print("⬇️ Continuando con la cancelación...")
+            else:
+                print("❌ ERROR CRÍTICO: No se encontró la primera fila de la tabla. Cancelando por seguridad.")
+
+            # ==========================================================
+            #   FLUJO DE CANCELACIÓN
+            # ==========================================================
+
+            print("Re-abriendo detalles (Lupa) para cancelar...")
+            time.sleep(2)
+            self._click(BTN_LUPITA) 
+            
+            print("Cambiando estatus...")
+            time.sleep(2)
+            self._click_js(SELECTOR_BTN_CAMBIAR_ESTATUS)
+            
+            print("Seleccionando opcion pendiente")
+            time.sleep(1)
+            self._click_js(SELECTOR_DROPDOWN_ESTATUS)
+            time.sleep(1)
+            self._click_js(SELECTOR_OPCION_PENDIENTE)
+            
+            print("Escogiendo motivo")
+            time.sleep(1)
+            self._click_js(SELECTOR_DROPDOWN_MOTIVO)
+            time.sleep(1)
+            self._click_js(SELECTOR_OPCION_NO_LOCALIZADO)
+            
+            print("Escribiendo observaciones...")
+            time.sleep(1)
+            self._escribir(SELECTOR_TEXTAREA_OBSERVACIONES, "Timeout 5 min.")
+            
+            time.sleep(1)
+            self._click_js(SELECTOR_BTN_ACEPTAR)
+            print(">> Cancelación finalizada.")
+
+        except NoSuchElementException:
+            print(f"NO se encontró a {NOMBRE_OBJETIVO} para asignar.")
+            return
+        
+
 
     def seguimiento_ajustadores(self):
         print("Navegando al menú de Seguimiento de Ajustadores...")
@@ -433,7 +612,7 @@ class Atlas:
             btn_asignar = self.wait.until(EC.element_to_be_clickable(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA))
             
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar)
-            time.sleep(1) 
+            time.sleep(1)
             self.driver.execute_script("arguments[0].click();", btn_asignar)
             print(">> Botón 'Asignar' clickeado correctamente.")
             
@@ -442,7 +621,6 @@ class Atlas:
                   f"Puede que la tabla esté vacía o tardó demasiado. Detalles: {e}")
 
 
-    def seleccionar_ajustador(self):
         print("Seleccionando ajustador manualmente...")
         self._click_js(SELECTOR_BTN_ASIGNACION_MANUAL)
         time.sleep(2)
@@ -458,11 +636,22 @@ class Atlas:
             time.sleep(2)
             print("Confirmando asignación...")
             self._click_scroll_js(SELECTOR_BTN_ASIGNAR_FINAL)
+            time.sleep(1)
+            print("Desplegando opciones de Motivo de Cancelación...")
+            self._click_js(SELECTOR_DROPDOWN_MOTIVO)
+            time.sleep(1)
+
+
+
+
 
         except Exception:
             # 3. Si no encuentra el botón, entra aquí y no hace nada (o imprime un log)
             print("El botón de asignar no apareció, el flujo ha terminado.")
             pass
+
+
+    
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -501,9 +690,10 @@ if __name__ == "__main__":
         
         # 3. PASAR LA VARIABLE CAPTURADA AL INICIO
         bot.buscar_poliza_dinamica(criterio=criterio_usuario)
-        
-        bot.seguimiento_ajustadores()
-        bot.seleccionar_ajustador()        
+        bot.procesar_seleccion_en_tabla()
+        bot.asignacion_manual()
+        # bot.seguimiento_ajustadores()
+          
 
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
