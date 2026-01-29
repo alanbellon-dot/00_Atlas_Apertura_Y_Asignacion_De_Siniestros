@@ -566,31 +566,23 @@ class Atlas:
     def seguimiento_ajustadores(self):
         print("Navegando al menú de Seguimiento de Ajustadores...")
         
-        # 1. Pequeña pausa para asegurar que el modal anterior (SweetAlert) desapareció completamente
         time.sleep(2) 
         
-        # Clic en el menú
         self._click_js(SELECTOR_MENU_SEGUIMIENTO)
         
         print("Esperando carga de la pantalla de Seguimiento...")
-        # Damos tiempo a que cargue la nueva página (aumentado por seguridad)
         time.sleep(5)
         
         print("Seleccionando la pestaña 'Por Asignar'...")
         try:
-            # 2. CAMBIO CLAVE: Esperar a que el elemento sea VISIBLE, no solo presente
             tab_element = self.wait.until(EC.visibility_of_element_located(SELECTOR_TAB_POR_ASIGNAR))
             
-            # 3. Movernos al elemento para asegurar que nada lo tapa
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tab_element)
             time.sleep(1) # Pausa para que el scroll termine
             
-            # 4. Intentar clic
-            # Intentamos clic nativo primero (es más seguro para detectar si algo lo tapa)
             try:
                 tab_element.click()
             except Exception:
-                # Si falla, forzamos con JS
                 print("Clic nativo falló, forzando con JS...")
                 self.driver.execute_script("arguments[0].click();", tab_element)
                 
@@ -598,17 +590,13 @@ class Atlas:
 
         except Exception as e:
             print(f"ERROR: No se pudo encontrar o clickear la pestaña 'Por Asignar'. Detalles: {e}")
-            # Opcional: Imprimir el código fuente para depurar si el error persiste
-            # print(self.driver.page_source)
-            raise # Re-lanzamos el error para detener el bot si esto falla
+            raise
         
         print("Esperando a que cargue la tabla de registros...")
-        # Aumentamos el tiempo de espera para asegurar que la tabla aparezca
         time.sleep(5) 
         
         print("Intentando asignar la primera fila...")
         try:
-            # Usamos el wait explícito para asegurar que el botón es clickeable
             btn_asignar = self.wait.until(EC.element_to_be_clickable(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA))
             
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar)
@@ -620,7 +608,6 @@ class Atlas:
             print(f"ADVERTENCIA: No se pudo clickear el botón 'Asignar'. "
                   f"Puede que la tabla esté vacía o tardó demasiado. Detalles: {e}")
 
-
         print("Seleccionando ajustador manualmente...")
         self._click_js(SELECTOR_BTN_ASIGNACION_MANUAL)
         time.sleep(2)
@@ -628,10 +615,8 @@ class Atlas:
         self._click_js(SELECTOR_TXT_ASIGNAR)
         time.sleep(2)
         try:
-            # 1. Intenta hacer clic en el primer botón
             self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
             
-            # 2. Si la línea de arriba NO falló, ejecuta lo siguiente:
             print("Botón encontrado. Procediendo...")
             time.sleep(2)
             print("Confirmando asignación...")
@@ -641,17 +626,9 @@ class Atlas:
             self._click_js(SELECTOR_DROPDOWN_MOTIVO)
             time.sleep(1)
 
-
-
-
-
         except Exception:
-            # 3. Si no encuentra el botón, entra aquí y no hace nada (o imprime un log)
             print("El botón de asignar no apareció, el flujo ha terminado.")
             pass
-
-
-    
 
     def cerrar(self):
         print("Cerrando navegador...")
@@ -665,18 +642,20 @@ class Atlas:
 # ==========================================
 
 if __name__ == "__main__":
-    # 1. PREGUNTAR AL USUARIO ANTES DE INICIAR EL BOT
     print("\n--- CONFIGURACIÓN INICIAL ---")
-    print("Opciones disponibles: POLIZA, SERIE, PLACAS, SANTANDER, INCISO")
-    criterio_usuario = input("Ingrese el criterio de búsqueda deseado en mayusculas: ").strip().upper()
     
-    # Validación: Si el usuario solo da Enter, usar un valor por defecto
+    print("Opciones de Búsqueda: POLIZA, SERIE, PLACAS, SANTANDER, INCISO")
+    criterio_usuario = input("Ingrese el criterio de búsqueda deseado en mayúsculas: ").strip().upper()
+    
     if not criterio_usuario:
         print("Entrada vacía. Se usará el valor por defecto: PLACAS")
         criterio_usuario = "PLACAS"
 
-    # 2. INICIAR EL BOT
-    # Ahora sí coincide el argumento con el __init__
+    print("\n--- TIPO DE ASIGNACIÓN ---")
+    print("1. Asignación Manual (Directa desde la tabla)")
+    print("2. Asignación por Menú de Seguimiento")
+    opcion_asignacion = input("Seleccione una opción (1 o 2): ").strip()
+
     bot = Atlas(headless=False)
     
     try:
@@ -688,11 +667,13 @@ if __name__ == "__main__":
         bot.datos_del_siniestro()
         bot.ajuste_remoto()
         
-        # 3. PASAR LA VARIABLE CAPTURADA AL INICIO
         bot.buscar_poliza_dinamica(criterio=criterio_usuario)
         bot.procesar_seleccion_en_tabla()
-        bot.asignacion_manual()
-        # bot.seguimiento_ajustadores()
+        
+        if opcion_asignacion == "2":
+            bot.seguimiento_ajustadores()
+        else:
+            bot.asignacion_manual()
           
 
         print(">> Automatización finalizada con éxito.")
