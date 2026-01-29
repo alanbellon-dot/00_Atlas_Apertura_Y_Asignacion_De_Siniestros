@@ -1,11 +1,6 @@
-from busquedas.busqueda_poliza import BusquedaPoliza
-from busquedas.busqueda_serie import BusquedaSerie
-from busquedas.busqueda_placas import BusquedaPlacas
-from busquedas.busqueda_santader import BusquedaSantander
-from busquedas.busqueda_inciso import BusquedaInciso
-import time
-import os
-import sys
+from busquedas import (BusquedaPoliza, BusquedaSerie, BusquedaPlacas, 
+                       BusquedaSantander, BusquedaInciso)
+import time, os, sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
@@ -276,7 +271,6 @@ class Atlas:
         except Exception as e:
             print(f"Error: {e}")
             raise
-
     
     def datos_del_siniestro(self):
         print("Llenando datos del siniestro...")
@@ -365,13 +359,8 @@ class Atlas:
             return
 
     def procesar_seleccion_en_tabla(self):
-        """
-        Lógica reutilizable para seleccionar el resultado y manejar popups.
-        """
         print("Esperando resultados y seleccionando registro...")
-        
         time.sleep(3) 
-        
         self._click_js(SELECTOR_CHECKBOX_LABEL)
         time.sleep(1)
         
@@ -385,8 +374,7 @@ class Atlas:
         except:
             pass
         
-        time.sleep(2)
-        
+        time.sleep(2)    
         print("Aceptando confirmaciones...")
  
         try:
@@ -396,12 +384,9 @@ class Atlas:
         except Exception as e:
             print("El botón desplegable no apareció, continuando con el flujo normal...")
 
-        self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)
-        
+        self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)  
         time.sleep(5)
         self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
-        
-
 
     def asignacion_manual(self):
         print("Damos clic a la lupita")
@@ -439,7 +424,6 @@ class Atlas:
             self._click_js(SELECTOR_BTN_CERRAR_MODAL)
             time.sleep(3) # Espera para que se vea la tabla de fondo
             
-
             xpath_estatus_primera_fila = "//tbody/tr[1]//td[contains(@class, 'mat-column-estatus')]"
             
             celdas = self.driver.find_elements(By.XPATH, xpath_estatus_primera_fila)
@@ -492,14 +476,10 @@ class Atlas:
         except NoSuchElementException:
             print(f"NO se encontró a {NOMBRE_OBJETIVO} para asignar.")
             return
-        
-
 
     def seguimiento_ajustadores(self):
         print("Navegando al menú de Seguimiento de Ajustadores...")
-        
         time.sleep(2) 
-        
         self._click_js(SELECTOR_MENU_SEGUIMIENTO)
         
         print("Esperando carga de la pantalla de Seguimiento...")
@@ -569,8 +549,6 @@ class Atlas:
         except Exception:
             pass
 
-
-
 if __name__ == "__main__":
     print("\n--- CONFIGURACIÓN INICIAL ---")
     
@@ -603,15 +581,13 @@ if __name__ == "__main__":
         if opcion_asignacion == "2":
             bot.seguimiento_ajustadores()
         else:
-            bot.asignacion_manual()
-          
+            bot.asignacion_manual()  
 
         print(">> Automatización finalizada con éxito.")
         time.sleep(5) 
         
     except Exception as e:
         print(f"CRITICAL ERROR: {e}")
-        # bot.driver.save_screenshot("error_log.png")
         
     finally:
         bot.cerrar()
