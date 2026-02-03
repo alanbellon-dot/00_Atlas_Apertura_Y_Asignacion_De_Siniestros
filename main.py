@@ -1,7 +1,7 @@
 from busquedas.busqueda_poliza import BusquedaPoliza
 from busquedas.busqueda_serie import BusquedaSerie
-from busquedas.busqueda_placas import BusquedaPlacas
 from busquedas.busqueda_santader import BusquedaSantander
+from busquedas.busqueda_placas import BusquedaPlacas
 from busquedas.busqueda_inciso import BusquedaInciso
 import time, os, sys
 from selenium import webdriver
@@ -170,28 +170,6 @@ class Atlas:
         """Fuerza un click usando JavaScript (útil para checkboxes rebeldes)."""
         element = self.wait.until(EC.presence_of_element_located(locator))
         self.driver.execute_script("arguments[0].click();", element)
-
-    def _click_if_exists(self, locator, timeout=3):
-        """
-        Intenta hacer clic en un elemento si aparece dentro del tiempo especificado.
-        Si no aparece, simplemente lo ignora y continua (no lanza error).
-        """
-        try:
-            # Usamos un wait con timeout corto personalizado para no esperar 10s si no es necesario
-            wait_short = WebDriverWait(self.driver, timeout)
-            element = wait_short.until(EC.presence_of_element_located(locator))
-            
-            # Scroll para asegurar visibilidad
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-            
-            # Clic JS
-            self.driver.execute_script("arguments[0].click();", element)
-            print(f"   -> Clic opcional exitoso en: {locator}")
-            return True
-        except Exception:
-            # Si no existe o falla, simplemente retornamos False sin romper el programa
-            # print(f"   (Info) Elemento opcional no encontrado o no necesario: {locator}") # Descomentar para debug
-            return False
 
     def _escribir(self, locator, texto):
         """Espera a que sea visible, limpia el campo y escribe."""
@@ -385,45 +363,33 @@ class Atlas:
 
     def procesar_seleccion_en_tabla(self):
         print("Esperando resultados y seleccionando registro...")
-        
-        # Esperar a que la tabla cargue (es mejor esperar al checkbox que dormir 3s)
-        try:
-            self._esperar_elemento(SELECTOR_CHECKBOX_LABEL)
-        except:
-            print("No se encontraron resultados en la tabla.")
-            return
-
+        time.sleep(3) 
         self._click_js(SELECTOR_CHECKBOX_LABEL)
-        time.sleep(0.5) 
+        time.sleep(1)
         
         print("Clic en botón Seleccionar...")
         self._click_js(SELECTOR_BTN_SELECCIONAR)
         
-        # Manejo robusto del doble clic en Seleccionar (a veces necesario)
-        if self._click_if_exists(SELECTOR_BTN_SELECCIONAR, timeout=2):
-            print("   -> Se requirió un segundo clic en Seleccionar.")
+        time.sleep(2)
         
-        print("Gestionando confirmaciones y popups...")
+        try:
+            self._click_js(SELECTOR_BTN_SELECCIONAR)
+        except:
+            pass
+        
+        time.sleep(2)    
+        print("Aceptando confirmaciones...")
  
-        # 1. Botón Desplegable (Aceptar simple)
-        # Usamos _click_if_exists en lugar de try/except manual
-        if self._click_if_exists(BTN_DESPLEGABLE_ACEPTAR, timeout=5):
+        try:
+            self._click_js(BTN_DESPLEGABLE_ACEPTAR)
             print("Botón desplegable aceptado.")
-            time.sleep(1) # Pequeña pausa para permitir transición
-        else:
-            print("El botón desplegable no apareció (continuando)...")
+            time.sleep(5)
+        except Exception as e:
+            print("El botón desplegable no apareció, continuando con el flujo normal...")
 
-        # 2. Botón Warning (Amarillo) - AHORA ES OPCIONAL
-        # Antes esto rompía el script si no salía el warning
-        if self._click_if_exists(SELECTOR_BTN_ACEPTAR_WARNING, timeout=5):
-            print("Advertencia (Warning) aceptada.")
-            time.sleep(1)
-
-        # 3. Sweet Alert (Swal) - AHORA ES OPCIONAL
-        # Antes esto rompía el script si no salía la confirmación final
-        if self._click_if_exists(SELECTOR_BTN_SWAL_ACEPTAR, timeout=5):
-            print("Confirmación final (Swal) aceptada.")
-            time.sleep(2) # Esperar a que el modal se cierre visualmente
+        self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)  
+        time.sleep(5)
+        self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
 
     def asignacion_manual(self):
         print("Damos clic a la lupita")
