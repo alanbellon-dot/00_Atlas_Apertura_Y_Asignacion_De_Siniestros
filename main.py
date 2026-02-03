@@ -1,5 +1,8 @@
-from busquedas import (BusquedaPoliza, BusquedaSerie, BusquedaPlacas, 
-                       BusquedaSantander, BusquedaInciso)
+from busquedas.busqueda_poliza import BusquedaPoliza
+from busquedas.busqueda_serie import BusquedaSerie
+from busquedas.busqueda_placas import BusquedaPlacas
+from busquedas.busqueda_santader import BusquedaSantander
+from busquedas.busqueda_inciso import BusquedaInciso
 import time, os, sys
 from selenium import webdriver
 from selenium.webdriver.common.by import By
