@@ -106,6 +106,7 @@ SELECTOR_BTN_ASIGNAR_FINAL = (By.XPATH, "//button[@status='success' and contains
 SELECTOR_MENU_SEGUIMIENTO = (By.XPATH, "//a[@title='Seguimiento ajustadores']")
 SELECTOR_TAB_POR_ASIGNAR = (By.XPATH, "//span[contains(., 'Por Asignar')]")
 SELECTOR_BTN_ASIGNAR_PRIMERA_FILA = (By.XPATH, "(//tbody//tr)[1]//button[contains(., 'Asignar')]")
+SELECTOR_BTN_SWAL_CANCEL_ACEPTAR = (By.XPATH, "//button[contains(@class, 'swal2-cancel') and contains(., 'Aceptar')]")
 
 # --- SELECTORES: SELECCIÓN DE AJUSTADOR ---
 SELECTOR_BTN_ASIGNACION_MANUAL = (By.XPATH, "//button[contains(., 'Asignación manual')]")
@@ -364,44 +365,59 @@ class Atlas:
         else:
             return
 
+    
     def procesar_seleccion_en_tabla(self):
         """
-        Lógica reutilizable para seleccionar el resultado y manejar popups.
+        Selecciona el registro en la tabla manejando esperas y popups de forma robusta.
         """
-        print("Esperando resultados y seleccionando registro...")
+        print("Procesando selección de registro...")
         
-        time.sleep(3) 
+        # Pausa de seguridad vital para estabilización de la tabla
+        time.sleep(5) 
         
-        self._click_js(SELECTOR_CHECKBOX_LABEL)
-        time.sleep(1)
-        
-        print("Clic en botón Seleccionar...")
-        self._click_js(SELECTOR_BTN_SELECCIONAR)
-        
-        time.sleep(2)
-        
+        # 1. Intentar marcar checkbox
         try:
-            self._click_js(SELECTOR_BTN_SELECCIONAR)
-        except:
+            self._click_js(SELECTOR_CHECKBOX_LABEL)
+            time.sleep(0.5)
+        except Exception:
             pass
+
+        # 2. Bucle de persistencia (Clic Seleccionar <-> Cerrar Popups)
+        inicio = time.time()
+        popups = [BTN_DESPLEGABLE_ACEPTAR, SELECTOR_BTN_ACEPTAR_WARNING, SELECTOR_BTN_SWAL_ACEPTAR]
+
+        while (time.time() - inicio) < 60:
+            
+            # A. Verificar si la tabla ya se cerró (Éxito)
+            try:
+                btn_sel = self.driver.find_element(*SELECTOR_BTN_SELECCIONAR)
+                if not btn_sel.is_displayed():
+                    print(">> Selección completada correctamente.")
+                    break
+            except Exception:
+                print(">> Selección completada (Tabla cerrada).")
+                break
+
+            # B. Intentar clic en botón Seleccionar
+            try:
+                self._click_js(SELECTOR_BTN_SELECCIONAR)
+            except Exception:
+                pass
+            
+            # C. Cerrar cualquier popup visible
+            for selector in popups:
+                try:
+                    elementos = self.driver.find_elements(*selector)
+                    for btn in elementos:
+                        if btn.is_displayed():
+                            self.driver.execute_script("arguments[0].click();", btn)
+                            time.sleep(1) # Pequeña pausa para permitir que se cierre
+                except:
+                    pass
+            
+            time.sleep(1.5)
         
         time.sleep(2)
-        
-        print("Aceptando confirmaciones...")
- 
-        try:
-            self._click_js(BTN_DESPLEGABLE_ACEPTAR)
-            print("Botón desplegable aceptado.")
-            time.sleep(5)
-        except Exception as e:
-            print("El botón desplegable no apareció, continuando con el flujo normal...")
-
-        print("Seleccion de boton aceptar warning")
-        self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)
-        print("Seleccion de aceptar")
-        time.sleep(5)
-        self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
-        
 
 
     def asignacion_manual(self):
@@ -497,71 +513,98 @@ class Atlas:
 
 
     def seguimiento_ajustadores(self):
-        print("Navegando al menú de Seguimiento de Ajustadores...")
+        """
+        Navegación robusta al menú de seguimiento y asignación, limpia de depuración.
+        """
+        print("--- INICIANDO MÓDULO DE SEGUIMIENTO ---")
         
-        time.sleep(2) 
-        
-        self._click_js(SELECTOR_MENU_SEGUIMIENTO)
-        
-        print("Esperando carga de la pantalla de Seguimiento...")
-        time.sleep(5)
-        
-        print("Seleccionando la pestaña 'Por Asignar'...")
-        try:
-            tab_element = self.wait.until(EC.visibility_of_element_located(SELECTOR_TAB_POR_ASIGNAR))
-            
-            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tab_element)
-            time.sleep(1) # Pausa para que el scroll termine
-            
-            try:
-                tab_element.click()
-            except Exception:
-                print("Clic nativo falló, forzando con JS...")
-                self.driver.execute_script("arguments[0].click();", tab_element)
-                
-            print(">> Pestaña 'Por Asignar' seleccionada.")
+        time.sleep(1)
+        self._click_js(SELECTOR_BTN_SWAL_CANCEL_ACEPTAR)
+        # 1. Esperar limpieza de pantalla
+        self._esperar_desaparicion((By.CSS_SELECTOR, ".contenedorBlock"))
+        time.sleep(1)
 
-        except Exception as e:
-            print(f"ERROR: No se pudo encontrar o clickear la pestaña 'Por Asignar'. Detalles: {e}")
-            raise
+        # 2. Navegación con reintentos (Bypasea la alerta naranja si aparece)
+        max_intentos = 3
+        navegacion_exitosa = False
         
-        print("Esperando a que cargue la tabla de registros...")
-        time.sleep(5) 
+        for intento in range(max_intentos):
+            try:
+                # Intentar clic en el menú
+                menu_btn = self._esperar_elemento(SELECTOR_MENU_SEGUIMIENTO)
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", menu_btn)
+                time.sleep(0.5)
+                self.driver.execute_script("arguments[0].click();", menu_btn)
+                
+                # Verificar si cambiamos de página
+                time.sleep(4)
+                if "siniestro/apertura" not in self.driver.current_url: 
+                    navegacion_exitosa = True
+                    break
+                else:
+                    print(f"   >> Reintentando navegación ({intento + 1}/{max_intentos})...")
+                    # Espera CLAVE para que cualquier alerta naranja desaparezca
+                    time.sleep(10)
+            
+            except Exception:
+                time.sleep(2)
+
+        if not navegacion_exitosa:
+            raise Exception("No se pudo navegar al menú de Seguimiento tras varios intentos.")
+
+        # 3. Selección de Pestaña
+        print(">> Seleccionando pestaña 'Por Asignar'...")
+        try:
+            wait_largo = WebDriverWait(self.driver, 20)
+            tab_element = wait_largo.until(EC.visibility_of_element_located(SELECTOR_TAB_POR_ASIGNAR))
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", tab_element)
+            time.sleep(1) 
+            self.driver.execute_script("arguments[0].click();", tab_element)
+        except Exception:
+            # Fallback de emergencia
+            try:
+                elem = self.driver.find_element(*SELECTOR_TAB_POR_ASIGNAR)
+                self.driver.execute_script("arguments[0].click();", elem)
+            except:
+                raise Exception("Error crítico al seleccionar la pestaña.")
         
-        print("Intentando asignar la primera fila...")
+        print(">> Esperando tabla de registros...")
+        time.sleep(3) 
+        
+        # 4. Clic en Asignar (Primera fila)
         try:
             btn_asignar = self.wait.until(EC.element_to_be_clickable(SELECTOR_BTN_ASIGNAR_PRIMERA_FILA))
-            
             self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", btn_asignar)
             time.sleep(1)
             self.driver.execute_script("arguments[0].click();", btn_asignar)
-            print(">> Botón 'Asignar' clickeado correctamente.")
-            
-        except Exception as e:
-            print(f"ADVERTENCIA: No se pudo clickear el botón 'Asignar'. "
-                  f"Puede que la tabla esté vacía o tardó demasiado. Detalles: {e}")
+            print(">> Botón 'Asignar' clickeado.")
+        except Exception:
+            print(">> Advertencia: No se pudo clickear 'Asignar' (¿Tabla vacía?).")
 
-        print("Seleccionando ajustador manualmente...")
-        self._click_js(SELECTOR_BTN_ASIGNACION_MANUAL)
-        time.sleep(2)
-        print("Asignando ajustador...")
-        self._click_js(SELECTOR_TXT_ASIGNAR)
-        time.sleep(2)
+        # 5. Flujo del Modal de Asignación Manual
+        print(">> Procesando asignación manual...")
         try:
-            self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
-            
-            print("Botón encontrado. Procediendo...")
+            self._click_js(SELECTOR_BTN_ASIGNACION_MANUAL)
             time.sleep(2)
-            print("Confirmando asignación...")
+            
+            self._click_js(SELECTOR_TXT_ASIGNAR)
+            time.sleep(2)
+            
+            # Asegurar clic en el botón final dentro del modal
+            self._click_scroll_js(SELECTOR_TXT_ASIGNAR)
+            time.sleep(2)
+            
             self._click_scroll_js(SELECTOR_BTN_ASIGNAR_FINAL)
             time.sleep(1)
-            print("Desplegando opciones de Motivo de Cancelación...")
+            
+            # Desplegar motivo (paso final usual)
             self._click_js(SELECTOR_DROPDOWN_MOTIVO)
             time.sleep(1)
-
+            
         except Exception:
-            print("El botón de asignar no apareció, el flujo ha terminado.")
-            pass
+            pass # Si el modal no abrió o ya estaba asignado, continuamos sin romper.
+
+
 
     def cerrar(self):
         print("Cerrando navegador...")
