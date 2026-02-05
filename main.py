@@ -396,8 +396,9 @@ class Atlas:
         except Exception as e:
             print("El botón desplegable no apareció, continuando con el flujo normal...")
 
+        print("Seleccion de boton aceptar warning")
         self._click_js(SELECTOR_BTN_ACEPTAR_WARNING)
-        
+        print("Seleccion de aceptar")
         time.sleep(5)
         self._click_js(SELECTOR_BTN_SWAL_ACEPTAR)
         
