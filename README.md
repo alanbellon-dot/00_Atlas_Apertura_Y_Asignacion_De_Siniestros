@@ -1,81 +1,91 @@
-# 🤖 Bot de Automatización: Apertura y Asignación de Siniestros (Atlas)
-
-Este proyecto es una herramienta de automatización que desarrollé utilizando **Python** y **Selenium**. Su objetivo principal es realizar el flujo completo de "End-to-End" (E2E) en el portal de pruebas (Prometeo QA) para la apertura de siniestros y la asignación de ajustadores.
-
-El script automatiza desde el inicio de sesión hasta la asignación manual de un ajustador, pasando por el llenado de múltiples formularios y búsquedas dinámicas.
-
-## 🚀 Funcionalidades Principales
-
-El bot realiza las siguientes tareas de forma secuencial:
-
-1. **Inicio de Sesión Automático:** Ingresa credenciales en el portal `prometeo-qa-demo`.
-2. **Llenado de Formularios:** Completa automáticamente los datos del:
-* Reportante (Nombre, Teléfonos, Causa).
-* Conductor.
-* Ubicación del Siniestro (Interacción con Google Maps inputs).
-* Detalles del Siniestro (Fecha, Hora, Hechos, Color del vehículo).
-* Ajuste Remoto (Selección de opciones negativas).
 
 
-3. **Búsqueda Dinámica de Póliza:** Implementé un patrón de estrategia para buscar el siniestro por diferentes criterios según la necesidad del momento:
-* `PLACAS`
-* `POLIZA` (Tradicional)
-* `SERIE`
-* `SANTANDER`
-* `INCISO`
+# 🤖 Bot de Automatización de Siniestros (Versión Playwright)
 
+Este proyecto es una herramienta de automatización de alto rendimiento migrada de Selenium a **Playwright**. Automatiza el ciclo completo de apertura, búsqueda y asignación de siniestros en el portal de "Aseguradora Digital".
 
-4. **Asignación de Ajustador:** Navega al menú de seguimiento, filtra por "Por Asignar" y realiza la asignación manual del ajustador en la tabla.
+Gracias a Playwright, esta versión es **más rápida, estable y resistente** a problemas de red o renderizado (como los mapas de Google o tablas dinámicas).
+
+## 🚀 Características Clave
+
+* **Page Object Model (POM):** Código organizado y modular en la carpeta `pages/`.
+* **Manejo Inteligente de Esperas:** Adiós a los `time.sleep` fijos; el bot espera automáticamente a que los elementos estén listos.
+* **Google Maps Blindado:** Estrategia híbrida (Click + Teclado) para asegurar que las direcciones se seleccionen correctamente.
+* **Búsqueda Avanzada de Pólizas:** Detecta automáticamente la fila "ACTIVA" en tablas dinámicas.
+* **Autorecuperación:** Si una iteración falla, el bot toma una **captura de pantalla del error**, refresca la página e intenta con la siguiente.
 
 ## 📂 Estructura del Proyecto
 
-Organicé el código de manera modular para facilitar el mantenimiento:
+```text
+PROYECTO/
+├── pages/                  # Lógica de cada pantalla (Page Objects)
+│   ├── login_page.py       # Inicio de sesión
+│   ├── apertura_page.py    # Formularios, Mapas y Búsqueda de Póliza
+│   └── asignacion_page.py  # Lógica de asignación a proveedores
+├── venv/                   # Entorno virtual (no se sube al repo)
+├── main.py                 # Script principal (Ejecutor)
+├── requirements.txt        # Dependencias del proyecto
+└── README.md               # Documentación
 
-* `main.py`: Es el orquestador principal. Configura el driver de Chrome, contiene la clase `Atlas` con todos los métodos de navegación (Page Object Model simplificado) y ejecuta el flujo.
-* `busquedas/`: Paquete que contiene la lógica específica para cada tipo de búsqueda.
-* `busqueda_placas.py`, `busqueda_poliza.py`, etc.: Cada archivo maneja los selectores y pasos únicos para ese criterio de búsqueda.
+```
 
+## 📋 Requisitos Previos
 
+* **Python 3.8+**: [Descargar Python](https://www.python.org/downloads/)
+* **Sistema Operativo**: Windows, Mac o Linux.
 
-## 🛠️ Requisitos e Instalación
+## ⚙️ Instalación
 
-Para correr este proyecto necesitas tener instalado Python y las siguientes librerías.
-
-1. **Clona este repositorio o descarga los archivos.**
-2. **Instala las dependencias:**
+1. **Clonar o descargar** el proyecto.
+2. **Crear un entorno virtual** (recomendado):
 ```bash
-pip install selenium
+python -m venv venv
 
 ```
 
 
-3. **Driver:** Asegúrate de tener Google Chrome instalado. El script usa `webdriver.Chrome`, por lo que Selenium manager debería encargarse del driver automáticamente en versiones recientes.
+* *Windows:* `.\venv\Scripts\activate`
+* *Mac/Linux:* `source venv/bin/activate`
 
-## ▶️ Ejecución
 
-Para iniciar el bot, simplemente ejecuta el archivo principal desde tu terminal:
+3. **Instalar dependencias**:
+```bash
+pip install -r requirements.txt
+
+```
+
+
+4. **Instalar navegadores de Playwright**:
+Este paso es vital para que funcione el motor de automatización.
+```bash
+playwright install
+
+```
+
+
+
+## ▶️ Cómo Ejecutar
+
+Asegúrate de tener tu entorno virtual activado y ejecuta:
 
 ```bash
 python main.py
 
 ```
 
-Al iniciar, el script te preguntará en la consola qué criterio de búsqueda quieres utilizar:
+### Interacción
 
-```text
---- CONFIGURACIÓN INICIAL ---
-Opciones disponibles: POLIZA, SERIE, PLACAS, SANTANDER, INCISO
-Ingrese el criterio de búsqueda deseado en mayusculas:
+El bot te hará dos preguntas en la consola:
 
-```
+1. **Cantidad de iteraciones:** ¿Cuántos siniestros quieres crear?
+2. **Búsqueda Avanzada:** Escribe `si` para usar el flujo complejo de "Gestor de Póliza" o `no` para usar la limpieza estándar.
 
-Si presionas `Enter` sin escribir nada, por defecto utilizará la búsqueda por **PLACAS**.
+## 🛠 Solución de Problemas
 
-## ⚙️ Configuración Adicional
-
-* **Modo Headless:** En la clase `Atlas` dentro de `main.py`, puedes cambiar `headless=False` a `True` si deseas que el navegador se ejecute en segundo plano sin interfaz gráfica.
-* **Credenciales:** Actualmente las credenciales de prueba (`Testing` / `123456*`) están definidas como constantes al inicio de `main.py`.
+* **Error "Strict Mode Violation":** Significa que el bot encontró múltiples elementos iguales. El código ya está parcheado con `.first` para evitar esto.
+* **El formulario no avanza:** El bot tomará una foto llamada `error_apertura_X.png`. Revisa la imagen para ver qué campo obligatorio faltó (usualmente dirección o teléfono).
+* **Login fallido:** Verifica que las credenciales en `pages/login_page.py` sean las correctas.
 
 ---
 
-*Desarrollado por Alan Bellon.*
+*Desarrollado con 🎭 Playwright y Python*
