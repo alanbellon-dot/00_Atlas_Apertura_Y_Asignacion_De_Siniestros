@@ -1,25 +1,26 @@
-from selenium.webdriver.common.by import By
+# busquedas/estrategia_base.py
+from abc import ABC, abstractmethod
+from playwright.sync_api import Page
 
-# --- SELECTORES ESPECÍFICOS DE ESTA ESTRATEGIA ---
-SELECTOR_INPUT_PLACAS = (By.CSS_SELECTOR, "input[formcontrolname='p_placas']")
-SELECTOR_BTN_BUSCAR = (By.XPATH, "//button[contains(., 'Buscar')]")
+class BusquedaEstrategia(ABC):
+    def __init__(self, page: Page):
+        self.page = page
 
+    @abstractmethod
+    def ejecutar(self):
+        pass
 
-class BusquedaPlacas:
-    def __init__(self, bot_instance):
-        """
-        :param bot_instance: Instancia del bot principal (Atlas) para acceder a sus métodos.
-        """
-        self.bot = bot_instance
+# busquedas/busqueda_placas.py
+from busquedas.estrategia_base import BusquedaEstrategia
+
+class BusquedaPlacas(BusquedaEstrategia):
+    def __init__(self, page):
+        super().__init__(page)
+        # Playwright soporta CSS sin necesidad de importar 'By.CSS_SELECTOR'
+        self.selector_input_placas = "input[formcontrolname='p_placas']"
+        self.selector_btn_buscar = "//button[contains(., 'Buscar')]"
 
     def ejecutar(self):
         print(">> [Estrategia] Iniciando búsqueda por Placas...")
-
-        # 1. Llenar campos específicos
-        print("Escribiendo número de placas...")
-        self.bot._escribir_js(SELECTOR_INPUT_PLACAS, "MSN6456")
-
-        # 2. Buscar (ESTE ES EL ÚNICO CLIC NECESARIO)
-        print("Clic en botón Buscar...")
-        self.bot._click_js(SELECTOR_BTN_BUSCAR)
-
+        self.page.locator(self.selector_input_placas).fill("MSN6456")
+        self.page.locator(self.selector_btn_buscar).click()
