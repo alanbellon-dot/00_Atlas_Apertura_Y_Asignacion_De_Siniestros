@@ -1,43 +1,46 @@
 from playwright.sync_api import sync_playwright
-from pages.login_page import LoginPage
-from busquedas.busqueda_placas import BusquedaPlacas
 from utils.config import Config
+from pages.login_page import LoginPage
+from pages.siniestro_page import SiniestroPage
+from pages.tabla_resultados_page import TablaResultadosPage
+from busquedas.busqueda_placas import BusquedaPlacas
+# from busquedas.busqueda_serie import BusquedaSerie # Importarás las demás aquí
 
 def main():
     print("\n--- INICIANDO AUTOMATIZACIÓN (PLAYWRIGHT) ---")
     
-    # 1. Iniciar Playwright
     with sync_playwright() as p:
-        # Configurar el navegador
         browser = p.chromium.launch(headless=Config.HEADLESS, args=["--start-maximized"])
-        context = browser.new_context(no_viewport=True) # Para mantener el maximizado real
+        context = browser.new_context(no_viewport=True)
         page = context.new_page()
 
         try:
-            # 2. Instanciar los Page Objects
+            # 1. Instanciar los Page Objects
             login_page = LoginPage(page)
-            # siniestro_page = SiniestroPage(page)   <-- Migrarás esta página luego
-            # asignacion_page = AsignacionPage(page) <-- Migrarás esta página luego
+            siniestro_page = SiniestroPage(page)
+            tabla_page = TablaResultadosPage(page)
+            # asignacion_page = AsignacionPage(page) <-- (Falta este último paso)
             
-            # 3. Flujo de Ejecución
+            # 2. Iniciar Sesión
             login_page.iniciar_sesion()
             
-            # -- Aquí irán los demás pasos abstraídos --
-            # siniestro_page.llenar_datos_reportante("Juan", "Galindo")
-            # siniestro_page.llenar_ubicacion("Metrobús Nápoles...")
+            # 3. Llenar los datos del Siniestro
+            siniestro_page.completar_flujo_siniestro()
             
-            # 4. Uso del patrón estrategia pasándole la página
-            estrategia_busqueda = BusquedaPlacas(page)
-            estrategia_busqueda.ejecutar()
+            # 4. Estrategia de búsqueda
+            # Aquí puedes poner la lógica de input() para preguntar qué buscar, igual que en tu Selenium
+            estrategia = BusquedaPlacas(page)
+            estrategia.ejecutar()
             
-            # asignacion_page.procesar_seleccion()
+            # 5. Manejar la selección y popups
+            tabla_page.procesar_seleccion()
             
-            print(">> Automatización finalizada con éxito.")
-            # time.sleep(5)  # En Playwright es page.wait_for_timeout(5000) si realmente quieres pausar al final
+            print("\n>> E2E: Búsqueda y Selección finalizada con éxito.")
+            page.pause() # Pausamos para que veas el resultado
             
         except Exception as e:
             print(f"CRITICAL ERROR: {e}")
-            page.screenshot(path="error_log.png") # Captura de error nativa muy útil
+            page.screenshot(path="error_log.png")
         finally:
             browser.close()
 

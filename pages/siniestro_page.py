@@ -144,3 +144,35 @@ class SiniestroPage(BasePage):
         self.finalizar_registro()
         self.llenar_datos_siniestro()
         self.seleccionar_ajuste_remoto()
+    
+    def seleccionar_criterio_busqueda(self, criterio="PLACAS"):
+        print(f"--- Seleccionando criterio en menú: {criterio} ---")
+        
+        # Selectores del menú de búsqueda
+        dropdown_criterio = "//mat-label[contains(text(), 'Buscar por')]/ancestor::mat-form-field//mat-select"
+        
+        # Opciones válidas
+        opciones = {
+            "POLIZA": "Póliza",
+            "SERIE": "Serie",
+            "PLACAS": "Placas",
+            "SANTANDER": "Santander",
+            "INCISO": "Inciso"
+        }
+        texto_opcion = opciones.get(criterio)
+
+        if not texto_opcion:
+            print(f"Criterio '{criterio}' no válido.")
+            return
+
+        try:
+            print("Desplegando menú 'Buscar por'...")
+            self.page.locator(dropdown_criterio).click(force=True)
+            self.page.wait_for_timeout(1000) # Pausa para animación de Angular
+            
+            print(f"Eligiendo opción '{texto_opcion}'...")
+            self.page.locator(f"//mat-option//span[contains(text(), '{texto_opcion}')]").click(force=True)
+            self.page.wait_for_timeout(1000)
+            
+        except Exception as e:
+            print(f"Error seleccionando el criterio: {e}")

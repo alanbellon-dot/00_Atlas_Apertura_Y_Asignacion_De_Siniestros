@@ -2,41 +2,72 @@ from playwright.sync_api import sync_playwright
 from utils.config import Config
 from pages.login_page import LoginPage
 from pages.siniestro_page import SiniestroPage
+from pages.tabla_resultados_page import TablaResultadosPage
+from pages.asignacion_page import AsignacionPage
+from busquedas.busqueda_poliza import BusquedaPoliza
 
-def probar_flujo():
-    print("\n--- INICIANDO PRUEBA DE MIGRACIÓN (PLAYWRIGHT) ---")
+# Importar tu estrategia base y la específica (Asegúrate de tener busqueda_placas creada)
+from busquedas.busqueda_placas import BusquedaPlacas 
+
+def probar_flujo(criterio, tipo_asignacion):
+    print("\n--- INICIANDO AUTOMATIZACIÓN E2E (PLAYWRIGHT) ---")
     
     with sync_playwright() as p:
-        # 1. Levantar el navegador visible
         browser = p.chromium.launch(headless=Config.HEADLESS, args=["--start-maximized"])
         context = browser.new_context(no_viewport=True)
         page = context.new_page()
 
         try:
-            # 2. Instanciar las páginas
+            # 1. Instanciar todas las páginas
             login_page = LoginPage(page)
             siniestro_page = SiniestroPage(page)
+            tabla_page = TablaResultadosPage(page)
+            asignacion_page = AsignacionPage(page)
             
-            # 3. Ejecutar Inicio de Sesión
+            # 2. Login
             login_page.iniciar_sesion()
-            
-            # 4. Ejecutar Flujo de Siniestro
-            # Llamamos al método envolvente que creamos para ejecutar todos los pasos
             siniestro_page.completar_flujo_siniestro()
             
-            print("\n✅ ¡Prueba completada con éxito!")
-            print("Abriendo el Inspector de Playwright. Cierra el inspector para terminar el script...")
+            # 4. Seleccionar el menú en la UI
+            siniestro_page.seleccionar_criterio_busqueda(criterio)
             
-            # 🔥 MAGIA DE PLAYWRIGHT: Esto pausará el script y abrirá un inspector
-            # Te permite explorar la página, ver selectores y continuar paso a paso.
-            page.pause()
+            # 5. Ejecutar la estrategia correspondiente
+            if criterio == "PLACAS":
+                estrategia = BusquedaPlacas(page)
+                estrategia.ejecutar()
+            elif criterio == "POLIZA":
+                estrategia = BusquedaPoliza(page)
+                estrategia.ejecutar()
+            # ... (Aquí agregarías los demás elif cuando crees sus archivos) ...
+            
+            # 6. Tabla y Popups
+            tabla_page.procesar_seleccion()
+            
+            # 7. Asignación de Ajustador
+            if tipo_asignacion == "2":
+                asignacion_page.seguimiento_ajustadores()
+            else:
+                asignacion_page.asignacion_manual()
+            
+            print("\n✅ ¡Flujo E2E completado con éxito!")
+            page.wait_for_timeout(5000)
             
         except Exception as e:
             print(f"❌ ERROR: {e}")
             page.screenshot(path="error_prueba.png")
-            print("Captura de pantalla del error guardada como 'error_prueba.png'.")
+            print("Captura de error guardada.")
         finally:
             browser.close()
 
 if __name__ == "__main__":
-    probar_flujo()
+    print("\n--- CONFIGURACIÓN INICIAL ---")
+    criterio_usuario = input("Ingrese el criterio de búsqueda (Ej. PLACAS): ").strip().upper()
+    if not criterio_usuario:
+        criterio_usuario = "PLACAS"
+
+    print("\n--- TIPO DE ASIGNACIÓN ---")
+    print("1. Asignación Manual (Directa desde la tabla)")
+    print("2. Asignación por Menú de Seguimiento")
+    opcion_asignacion = input("Seleccione una opción (1 o 2): ").strip()
+
+    probar_flujo(criterio_usuario, opcion_asignacion)
