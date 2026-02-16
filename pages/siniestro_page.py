@@ -115,6 +115,7 @@ class SiniestroPage(BasePage):
 
         # 3. Esperamos explícitamente a que la animación del calendario termine y el botón sea visible
         print("Seleccionando el día de hoy...")
+        self.page.locator(self.btn_color).scroll_into_view_if_needed() # Como este bajamos para que cargue el calendario
         btn_hoy = self.page.locator(self.btn_dia_hoy)
         btn_hoy.wait_for(state="visible") 
         btn_hoy.click() # Aquí ya no necesitamos force=True

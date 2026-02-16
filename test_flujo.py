@@ -5,6 +5,9 @@ from pages.siniestro_page import SiniestroPage
 from pages.tabla_resultados_page import TablaResultadosPage
 from pages.asignacion_page import AsignacionPage
 from busquedas.busqueda_poliza import BusquedaPoliza
+from busquedas.busqueda_serie import BusquedaSerie
+from busquedas.busqueda_santander import BusquedaSantander
+from busquedas.busqueda_inciso import BusquedaInciso
 
 # Importar tu estrategia base y la específica (Asegúrate de tener busqueda_placas creada)
 from busquedas.busqueda_placas import BusquedaPlacas 
@@ -38,7 +41,15 @@ def probar_flujo(criterio, tipo_asignacion):
             elif criterio == "POLIZA":
                 estrategia = BusquedaPoliza(page)
                 estrategia.ejecutar()
-            # ... (Aquí agregarías los demás elif cuando crees sus archivos) ...
+            elif criterio == "SERIE":  # <-- AGREGAR ESTA CONDICIÓN
+                estrategia = BusquedaSerie(page)
+                estrategia.ejecutar()
+            elif criterio == "SANTANDER":  # <-- AGREGAR ESTA CONDICIÓN
+                estrategia = BusquedaSantander(page)
+                estrategia.ejecutar()
+            elif criterio == "INCISO":  # <-- AGREGAR ESTA CONDICIÓN
+                estrategia = BusquedaInciso(page)
+                estrategia.ejecutar()
             
             # 6. Tabla y Popups
             tabla_page.procesar_seleccion()
@@ -61,7 +72,7 @@ def probar_flujo(criterio, tipo_asignacion):
 
 if __name__ == "__main__":
     print("\n--- CONFIGURACIÓN INICIAL ---")
-    criterio_usuario = input("Ingrese el criterio de búsqueda (Ej. PLACAS): ").strip().upper()
+    criterio_usuario = input("Ingrese el criterio de búsqueda (Ej. PLACAS, POLIZA, SERIE, SANTANDER, INCISO): ").strip().upper()
     if not criterio_usuario:
         criterio_usuario = "PLACAS"
 

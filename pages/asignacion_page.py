@@ -8,10 +8,11 @@ class AsignacionPage(BasePage):
         # --- Selectores Generales ---
         self.loader = ".contenedorBlock"
         self.btn_lupita = "(//button[.//mat-icon[contains(text(), 'search')]])[2]"
+        self.btn_aceptar_modal = "button.swal2-cancel:has-text('Aceptar')"
 
         # --- Selectores Asignación Manual (Opción 1) ---
         self.btn_agregar_ajustador = "//span[contains(@class, 'mdc-button__label') and contains(text(), 'Agregar Ajustador')]"
-        self.btn_asignacion_manual = "//button[contains(normalize-space(), 'Asignación manual')]"
+        self.btn_asignacion_manual = "//button[contains(., 'Asignación manual')]"
         self.btn_asignar_final = "//button[@status='success' and contains(normalize-space(), 'Asignar')]"
         self.btn_cerrar_modal = "//button[contains(@class, 'btn-cerrar-modal')]"
 
@@ -32,6 +33,9 @@ class AsignacionPage(BasePage):
         self.txt_asignar = "//span[normalize-space()='Asignar']"
 
     def asignacion_manual(self, nombre_objetivo="MANUEL ALEJANDRO BOLAÑOS GAMIÑO"):
+        btn_aceptar = self.page.locator(self.btn_aceptar_modal)
+        btn_aceptar.wait_for(state="visible")
+        btn_aceptar.click()
         print("Iniciando asignación manual (Lupa)...")
         self.page.wait_for_timeout(2000)
         self.page.locator(self.btn_lupita).click()
@@ -104,6 +108,9 @@ class AsignacionPage(BasePage):
             print(f"NO se encontró a {nombre_objetivo} para asignar.")
 
     def seguimiento_ajustadores(self):
+        btn_aceptar = self.page.locator(self.btn_aceptar_modal)
+        btn_aceptar.wait_for(state="visible")
+        btn_aceptar.click()
         print("--- INICIANDO MÓDULO DE SEGUIMIENTO ---")
         self.page.wait_for_timeout(1000)
         
@@ -136,7 +143,7 @@ class AsignacionPage(BasePage):
 
         print(">> Procesando asignación manual...")
         try:
-            self.page.locator(self.btn_asignacion_manual).click(force=True)
+            self.page.locator(self.btn_asignacion_manual).click()
             self.page.wait_for_timeout(2000)
             
             # En Playwright usamos .first para el equivalente a [1]

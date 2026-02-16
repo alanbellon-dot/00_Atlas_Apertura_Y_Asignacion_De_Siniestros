@@ -19,15 +19,42 @@ class TablaResultadosPage(BasePage):
 
     def procesar_seleccion(self):
         print("Procesando selección de registro en tabla...")
-        self.page.wait_for_timeout(3000) 
         
-        print("Intentando marcar el registro...")
+        # 1. ESPERA A QUE APAREZCA LA TABLA
+        print("Esperando a que carguen los resultados...")
         try:
-            self.page.locator(self.checkbox_tabla).check(force=True, timeout=2000)
-            print(">> Checkbox marcado exitosamente.")
+            # Esperamos que el input de la tabla exista
+            self.page.locator(self.checkbox_tabla).wait_for(state="attached", timeout=15000)
+            self.page.wait_for_timeout(1000) # Respiro para que terminen las animaciones
         except Exception:
-            pass
+            print(">> [!] La tabla de resultados no cargó o tardó demasiado.")
+            return
 
+        # 2. MARCAR EL CHECKBOX (CON VERIFICACIÓN)
+        print("Intentando marcar el registro...")
+        
+        # En Angular, es más seguro darle clic a la celda que al input oculto
+        celda_checkbox = self.page.locator("(//td[contains(@class, 'mat-column-checkbox')])[1]")
+        input_checkbox = self.page.locator(self.checkbox_tabla)
+
+        marcado_exitoso = False
+        # Intentamos marcarlo hasta 3 veces y verificamos si funcionó
+        for intento_check in range(3):
+            celda_checkbox.click(force=True)
+            self.page.wait_for_timeout(1000) # Dar tiempo a que Angular registre el evento
+            
+            # Verificar si realmente se marcó en el sistema
+            if input_checkbox.is_checked():
+                marcado_exitoso = True
+                print(">> Checkbox marcado y verificado exitosamente.")
+                break
+            else:
+                print(f"   [!] El checkbox no se marcó, intentando de nuevo... ({intento_check + 1}/3)")
+
+        if not marcado_exitoso:
+            print(">> [!] Advertencia: No se pudo confirmar visualmente el check. Avanzando...")
+
+        # 3. MANEJO DE POPUPS Y BOTÓN SELECCIONAR
         for intento in range(20):
             # A. Éxito si la tabla se cerró (el botón seleccionar ya no está)
             if not self.page.locator(self.btn_seleccionar).is_visible():
@@ -42,41 +69,25 @@ class TablaResultadosPage(BasePage):
                 pass
             
             # C. Buscar y matar UN popup por iteración
-            # C. Buscar y matar UN popup por iteración
             popup_manejado = False
             for selector in self.popups:
-                # Buscamos botones que contengan el texto 'Aceptar'
                 popup = self.page.locator(selector).filter(has_text="Aceptar").first
                 
                 if popup.is_visible():
                     print(f"   [!] Popup detectado (Intento {intento+1}), eliminando...")
-                    
-                    # 1. Pausa breve para estabilización
                     self.page.wait_for_timeout(500)
                     
                     try:
-                        # 2. MÉTODO TRIPLE ACCIÓN:
-                        # A) Intentamos el clic de JS que ya tenías
                         popup.evaluate("node => node.click()")
-                        
-                        # B) Mandamos la tecla Enter por si el foco se perdió
                         popup.press("Enter")
-                        
-                        # C) LA SOLUCIÓN DEFINITIVA: 
-                        # Si es un SweetAlert, le pedimos a la librería que se cierre inmediatamente
-                        # o removemos el overlay visual mediante JS para que deje de bloquear la pantalla.
                         self.page.evaluate("() => { if(window.Swal) { window.Swal.close(); } }")
-                        
                         print("   >> Clic y comandos de cierre ejecutados.")
                     except Exception as e:
                         print(f"   >> Error al intentar cerrar: {e}")
                         
-                    # 3. Pausa para permitir que Angular procese el cierre
                     self.page.wait_for_timeout(1000)
-                    
                     popup_manejado = True
                     break
             
-            # Si en esta iteración no hubo popups, esperamos un poco antes de volver a intentar "Seleccionar"
             if not popup_manejado:
                 self.page.wait_for_timeout(1000)
