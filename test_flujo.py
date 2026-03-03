@@ -8,8 +8,6 @@ from busquedas.busqueda_poliza import BusquedaPoliza
 from busquedas.busqueda_serie import BusquedaSerie
 from busquedas.busqueda_santander import BusquedaSantander
 from busquedas.busqueda_inciso import BusquedaInciso
-
-# Importar tu estrategia base y la específica (Asegúrate de tener busqueda_placas creada)
 from busquedas.busqueda_placas import BusquedaPlacas 
 
 def probar_flujo(criterio, tipo_asignacion):
@@ -41,13 +39,13 @@ def probar_flujo(criterio, tipo_asignacion):
             elif criterio == "POLIZA":
                 estrategia = BusquedaPoliza(page)
                 estrategia.ejecutar()
-            elif criterio == "SERIE":  # <-- AGREGAR ESTA CONDICIÓN
+            elif criterio == "SERIE":
                 estrategia = BusquedaSerie(page)
                 estrategia.ejecutar()
-            elif criterio == "SANTANDER":  # <-- AGREGAR ESTA CONDICIÓN
+            elif criterio == "SANTANDER":
                 estrategia = BusquedaSantander(page)
                 estrategia.ejecutar()
-            elif criterio == "INCISO":  # <-- AGREGAR ESTA CONDICIÓN
+            elif criterio == "INCISO":
                 estrategia = BusquedaInciso(page)
                 estrategia.ejecutar()
             
